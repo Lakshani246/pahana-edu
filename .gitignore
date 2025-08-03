@@ -1,0 +1,223 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+logs/
+log/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse specific files
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.project
+.classpath
+.externalToolBuilders/
+*.launch
+.factorypath
+
+# Eclipse Core
+.project
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS specific files
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with sensitive data
+database.properties
+config.properties
+application-local.properties
+application-prod.properties
+
+# But keep example configuration files
+!database.properties.example
+!config.properties.example
+
+# Backup files
+*.backup
+*.bck
+*.old
+backup/
+
+# Test output
+test-output/
+test-results/
+coverage/
+*.exec
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Build directories
+build/
+dist/
+out/
+
+# Server files
+tomcat/
+servers/
+
+# Generated files
+generated/
+gen/
+
+# Reports
+reports/
+*.pdf
+*.xlsx
+*.xls
+*.csv
+
+# But keep template files
+!*-template.pdf
+!*-template.xlsx
+!test-cases.xlsx
+
+# IDE workspace files
+*.code-workspace
+workspace.xml
+
+# Node modules (if using any JavaScript build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Gradle (in case you switch to Gradle)
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Security and private keys
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+
+# Application specific
+/uploads/
+/temp-files/
+/export/
+session-store/
+
+# Keep important directories
+!src/
+!docs/
+!scripts/
+!.gitkeep
+
+# Ignore everything in logs except .gitkeep
+logs/*
+!logs/.gitkeep
+
+# Ignore test databases
+test-database.db
+test-*.db
+
+# Maven Wrapper (include these if using maven wrapper)
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
