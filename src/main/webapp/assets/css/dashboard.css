@@ -1,0 +1,207 @@
+/* Dashboard Specific Styles */
+
+/* Dashboard Cards */
+.dashboard-card {
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Stat Cards */
+.stat-card {
+    padding: 1.25rem;
+}
+
+.stat-card .icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+
+.stat-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #858796;
+}
+
+/* Chart Container */
+.chart-area {
+    position: relative;
+    height: 320px;
+    width: 100%;
+}
+
+.chart-bar {
+    position: relative;
+    height: 320px;
+    width: 100%;
+}
+
+.chart-pie {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Quick Actions */
+.quick-actions .btn {
+    margin-bottom: 0.5rem;
+    text-align: left;
+    padding: 0.75rem 1rem;
+}
+
+.quick-actions .btn i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+/* Activity Feed */
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item .time {
+    font-size: 0.75rem;
+    color: #858796;
+}
+
+/* Summary Boxes */
+.summary-box {
+    background-color: #f8f9fc;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.summary-box h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #5a5c69;
+}
+
+.summary-box .value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2e59d9;
+}
+
+/* Progress Bars */
+.progress-sm {
+    height: 0.5rem;
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* Dashboard Tables */
+.dashboard-table {
+    font-size: 0.875rem;
+}
+
+.dashboard-table thead th {
+    background-color: transparent;
+    border-top: none;
+    font-weight: 600;
+    color: #858796;
+    padding: 0.5rem;
+}
+
+.dashboard-table tbody td {
+    padding: 0.5rem;
+    vertical-align: middle;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.online {
+    background-color: #1cc88a;
+}
+
+.status-indicator.offline {
+    background-color: #e74a3b;
+}
+
+.status-indicator.away {
+    background-color: #f6c23e;
+}
+
+/* Widget Headers */
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.widget-header h5 {
+    margin-bottom: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.widget-header .dropdown-toggle {
+    color: #858796;
+    font-size: 0.875rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #858796;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.empty-state p {
+    margin-bottom: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .stat-card .value {
+        font-size: 1.5rem;
+    }
+    
+    .chart-area, .chart-bar {
+        height: 200px;
+    }
+    
+    .activity-feed {
+        max-height: 300px;
+    }
+}
