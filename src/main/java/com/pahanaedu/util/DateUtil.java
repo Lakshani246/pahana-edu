@@ -248,4 +248,21 @@ public class DateUtil {
             return date;
         }
     }
+    
+    /**
+     * Format date with custom pattern
+     * Add this method to your existing DateUtil class
+     */
+    public static String formatDate(Date date, String pattern) {
+        if (date == null || pattern == null) {
+            return "";
+        }
+        try {
+            SimpleDateFormat customFormat = new SimpleDateFormat(pattern);
+            return customFormat.format(date);
+        } catch (Exception e) {
+            // If pattern is invalid, use default format
+            return formatDate(date);
+        }
+    }
 }

@@ -123,9 +123,9 @@
                     <h1 class="h2">Bill Details</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-primary" onclick="window.print()">
-                                <i class="fas fa-print"></i> Print
-                            </button>
+                            <button type="button" class="btn btn-primary" onclick="openPrintView()">
+							    <i class="fas fa-print"></i> Print
+							</button>
                             <button type="button" class="btn btn-outline-secondary" onclick="downloadPDF()">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
@@ -398,9 +398,9 @@
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
-                                        <i class="fas fa-print"></i> Print Bill
-                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="openPrintView()">
+									    <i class="fas fa-print"></i> Print Bill
+									</button>
                                     <button type="button" class="btn btn-outline-secondary" onclick="generateReceipt()">
                                         <i class="fas fa-receipt"></i> Generate Receipt
                                     </button>
@@ -585,7 +585,8 @@
         }
         
         function generateReceipt() {
-            window.open('${pageContext.request.contextPath}/bill/print?id=${bill.billId}&format=receipt', '_blank');
+            // Download as text receipt
+            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}/text';
         }
         
         function viewCustomer() {
@@ -593,7 +594,22 @@
         }
         
         function downloadPDF() {
-            window.location.href = '${pageContext.request.contextPath}/bill/pdf?id=${bill.billId}';
+            // Download as HTML (user can save as PDF from browser)
+            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}/html';
+        }
+        
+        function openPrintView() {
+            // Open the dedicated print view
+            var printWindow = window.open('${pageContext.request.contextPath}/bill/print/${bill.billId}', 
+                                          'PrintBill', 
+                                          'width=900,height=700');
+            
+            // Optional: Auto-print when window loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                }, 500);
+            };
         }
         
         // Print formatting

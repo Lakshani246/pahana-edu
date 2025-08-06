@@ -2,11 +2,10 @@ package com.pahanaedu.controller;
 
 import com.pahanaedu.service.interfaces.AuthService;
 import com.pahanaedu.service.impl.AuthServiceImpl;
+import com.pahanaedu.service.interfaces.ReportService;
+import com.pahanaedu.service.impl.ReportServiceImpl;
+import com.pahanaedu.dto.DashboardDTO;
 import com.pahanaedu.dao.interfaces.UserDAO;
-// TODO: Uncomment these imports when DAOs are implemented in later phases
-// import com.pahanaedu.dao.interfaces.CustomerDAO;
-// import com.pahanaedu.dao.interfaces.ItemDAO;
-// import com.pahanaedu.dao.interfaces.BillDAO;
 import com.pahanaedu.dao.impl.UserDAOImpl;
 import com.pahanaedu.model.User;
 import com.pahanaedu.constant.SystemConstants;
@@ -19,31 +18,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Servlet for handling dashboard display
+ * Servlet for handling dashboard display with integrated reports
  */
 @WebServlet(name = "DashboardController", urlPatterns = {"/dashboard"})
 public class DashboardController extends HttpServlet {
     
     private AuthService authService;
+    private ReportService reportService;
     private UserDAO userDAO;
-    // TODO: Initialize these DAOs when implemented in later phases
-    // private CustomerDAO customerDAO;
-    // private ItemDAO itemDAO;
-    // private BillDAO billDAO;
     
     @Override
     public void init() throws ServletException {
         super.init();
         authService = new AuthServiceImpl();
+        reportService = new ReportServiceImpl();
         userDAO = new UserDAOImpl();
-        // TODO: Initialize other DAOs when implemented
-        // customerDAO = new CustomerDAOImpl();
-        // itemDAO = new ItemDAOImpl();
-        // billDAO = new BillDAOImpl();
     }
     
     @Override
@@ -59,29 +50,14 @@ public class DashboardController extends HttpServlet {
         }
         
         try {
-            // Prepare dashboard statistics
-            Map<String, Object> dashboardStats = new HashMap<>();
+            // Generate dashboard statistics using ReportService
+            DashboardDTO dashboardStats = reportService.generateDashboardStatistics();
             
-            // User statistics
-            dashboardStats.put("totalUsers", userDAO.getTotalUserCount());
-            dashboardStats.put("activeUsers", userDAO.getActiveUserCount());
-            
-            // Placeholder statistics for now (will be updated when DAOs are implemented)
-            dashboardStats.put("totalCustomers", 0);
-            dashboardStats.put("totalItems", 0);
-            dashboardStats.put("lowStockItems", 0);
-            dashboardStats.put("todaysBills", 0);
-            dashboardStats.put("todaysSales", 0.0);
-            dashboardStats.put("monthlyBills", 0);
-            dashboardStats.put("monthlySales", 0.0);
-            
-            // Recent activities (placeholder)
-            dashboardStats.put("recentBills", null);
-            dashboardStats.put("recentCustomers", null);
-            
-            // Set attributes for JSP
-            request.setAttribute("dashboardStats", dashboardStats);
+            // Set current user
             request.setAttribute("currentUser", loggedUser);
+            
+            // Set dashboard statistics
+            request.setAttribute("dashboardStats", dashboardStats);
             
             // Forward to dashboard JSP
             request.getRequestDispatcher(SystemConstants.PAGE_DASHBOARD).forward(request, response);
@@ -97,12 +73,19 @@ public class DashboardController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Redirect POST requests to GET
-        doGet(request, response);
+        // Handle any dashboard actions if needed
+        String action = request.getParameter("action");
+        
+        if ("refresh".equals(action)) {
+            // Refresh dashboard data
+            doGet(request, response);
+        } else {
+            doGet(request, response);
+        }
     }
     
     @Override
     public String getServletInfo() {
-        return "Dashboard Controller - Main dashboard display";
+        return "Dashboard Controller - Main dashboard display with integrated reports";
     }
 }

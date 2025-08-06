@@ -3,7 +3,6 @@ package com.pahanaedu.service.impl;
 import com.pahanaedu.service.interfaces.BillingService;
 import com.pahanaedu.service.interfaces.CustomerService;
 import com.pahanaedu.service.interfaces.ItemService;
-//import com.pahanaedu.service.interfaces.StockService;
 import com.pahanaedu.dao.interfaces.BillDAO;
 import com.pahanaedu.dao.interfaces.BillItemDAO;
 import com.pahanaedu.dao.interfaces.ItemDAO;
@@ -23,10 +22,12 @@ import com.pahanaedu.util.ValidationUtil;
 import com.pahanaedu.constant.PaymentStatus;
 import com.pahanaedu.constant.PaymentMethod;
 import com.pahanaedu.dto.ItemDTO;
+import com.pahanaedu.service.interfaces.StockService;
+import com.pahanaedu.service.impl.StockServiceImpl;
+import com.pahanaedu.constant.MovementType;
 
 import java.util.*;
 import java.text.SimpleDateFormat;
-import java.sql.SQLException;
 
 /**
  * Implementation of BillingService interface
@@ -38,15 +39,17 @@ public class BillingServiceImpl implements BillingService {
     private BillItemDAO billItemDAO;
     private ItemDAO itemDAO;
     private CustomerService customerService;
+    private StockService stockService;
     // Note: ItemService and StockService will be implemented in later phases
     // private ItemService itemService;
-    // private StockService stockService;
+    
     
     public BillingServiceImpl() {
         this.billDAO = new BillDAOImpl();
         this.billItemDAO = new BillItemDAOImpl();
         this.itemDAO = new ItemDAOImpl();
         this.customerService = new CustomerServiceImpl();
+        this.stockService = new StockServiceImpl();
         // Initialize other services when available
     }
     
@@ -69,13 +72,9 @@ public class BillingServiceImpl implements BillingService {
         
         for (BillItem item : bill.getBillItems()) {
             if (!isItemAvailable(item.getItemId(), item.getQuantity())) {
-                try {
-                    Item itemDetails = itemDAO.getItemById(item.getItemId());
-                    throw new BusinessException("Insufficient stock for item: " + 
-                        (itemDetails != null ? itemDetails.getItemName() : "Unknown"));
-                } catch (SQLException e) {
-                    throw new BusinessException("Insufficient stock for item ID: " + item.getItemId());
-                }
+                Item itemDetails = itemDAO.getItemById(item.getItemId());
+                throw new BusinessException("Insufficient stock for item: " + 
+                    (itemDetails != null ? itemDetails.getItemName() : "Unknown"));
             }
         }
         
@@ -113,22 +112,18 @@ public class BillingServiceImpl implements BillingService {
         List<BillItem> billItems = new ArrayList<>();
         if (billDTO.getItemDTOs() != null) {
             for (ItemDTO itemDTO : billDTO.getItemDTOs()) {
-                try {
-                    Item item = itemDAO.getItemById(itemDTO.getItemId());
-                    if (item == null) {
-                        throw new BusinessException("Item not found: " + itemDTO.getItemId());
-                    }
-                    
-                    BillItem billItem = new BillItem();
-                    billItem.setItemId(item.getItemId());
-                    billItem.setItem(item);
-                    billItem.setQuantity(itemDTO.getQuantity());
-                    billItem.setUnitPrice(itemDTO.getUnitPrice() > 0 ? itemDTO.getUnitPrice() : item.getSellingPrice());
-                    billItem.setDiscountPercentage(itemDTO.getDiscountPercentage());
-                    billItems.add(billItem);
-                } catch (SQLException e) {
-                    throw new DatabaseException("Error retrieving item: " + e.getMessage(), e);
+                Item item = itemDAO.getItemById(itemDTO.getItemId());
+                if (item == null) {
+                    throw new BusinessException("Item not found: " + itemDTO.getItemId());
                 }
+                
+                BillItem billItem = new BillItem();
+                billItem.setItemId(item.getItemId());
+                billItem.setItem(item);
+                billItem.setQuantity(itemDTO.getQuantity());
+                billItem.setUnitPrice(itemDTO.getUnitPrice() > 0 ? itemDTO.getUnitPrice() : item.getSellingPrice());
+                billItem.setDiscountPercentage(itemDTO.getDiscountPercentage());
+                billItems.add(billItem);
             }
         }
         bill.setBillItems(billItems);
@@ -578,21 +573,9 @@ public class BillingServiceImpl implements BillingService {
     @Override
     public boolean isItemAvailable(int itemId, int quantity) throws DatabaseException {
         try {
-            Item item = itemDAO.getItemById(itemId);
-            
-            if (item == null) {
-                return false;
-            }
-            
-            // Check if item is active
-            if (!item.isActive()) {
-                return false;
-            }
-            
-            // Check stock
-            return item.getQuantityInStock() >= quantity;
-        } catch (SQLException e) {
-            throw new DatabaseException("Error checking item availability: " + e.getMessage(), e);
+            return stockService.isStockAvailable(itemId, quantity);
+        } catch (DatabaseException e) {
+            throw e;
         }
     }
     
@@ -838,20 +821,18 @@ public class BillingServiceImpl implements BillingService {
      */
     private void updateStockAfterSale(Bill bill) throws DatabaseException {
         try {
-            // This will be properly implemented when StockService is available
-            // For now, directly update item quantities
+            // Use StockService to properly record stock movements
+            Map<Integer, Integer> itemQuantities = new HashMap<>();
             for (BillItem billItem : bill.getBillItems()) {
-                Item item = itemDAO.getItemById(billItem.getItemId());
-                if (item != null) {
-                    item.setQuantityInStock(item.getQuantityInStock() - billItem.getQuantity());
-                    itemDAO.updateItem(item);
-                }
+                itemQuantities.put(billItem.getItemId(), billItem.getQuantity());
             }
-        } catch (SQLException e) {
-            throw new DatabaseException("Error updating stock: " + e.getMessage(), e);
+            
+            // Process the sale through stock service
+            stockService.processSale(bill.getBillId(), itemQuantities, bill.getUserId());
+        } catch (BusinessException e) {
+            throw new DatabaseException("Error updating stock after sale: " + e.getMessage(), e);
         }
     }
-    
     /**
      * Helper method to reverse stock after cancellation
      */
@@ -860,17 +841,10 @@ public class BillingServiceImpl implements BillingService {
      */
     private void reverseStockAfterCancellation(Bill bill) throws DatabaseException {
         try {
-            // This will be properly implemented when StockService is available
-            // For now, directly update item quantities
-            for (BillItem billItem : bill.getBillItems()) {
-                Item item = itemDAO.getItemById(billItem.getItemId());
-                if (item != null) {
-                    item.setQuantityInStock(item.getQuantityInStock() + billItem.getQuantity());
-                    itemDAO.updateItem(item);
-                }
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException("Error reversing stock: " + e.getMessage(), e);
+            // Use StockService to properly reverse the sale
+            stockService.cancelSale(bill.getBillId(), "Bill cancelled", bill.getUserId());
+        } catch (BusinessException e) {
+            throw new DatabaseException("Error reversing stock after cancellation: " + e.getMessage(), e);
         }
     }
     

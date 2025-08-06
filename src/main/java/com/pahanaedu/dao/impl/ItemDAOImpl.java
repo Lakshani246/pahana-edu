@@ -1,6 +1,7 @@
 package com.pahanaedu.dao.impl;
 
 import com.pahanaedu.dao.interfaces.ItemDAO;
+import com.pahanaedu.exception.DatabaseException;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.util.DBConnection;
 
@@ -15,7 +16,7 @@ public class ItemDAOImpl implements ItemDAO {
     }
     
     @Override
-    public int addItem(Item item) throws SQLException {
+    public int addItem(Item item) throws DatabaseException {
         String sql = "INSERT INTO items (item_code, item_name, description, category_id, " +
                      "author, publisher, isbn, unit_price, selling_price, quantity_in_stock, " +
                      "reorder_level, is_active, created_by) " +
@@ -40,21 +41,23 @@ public class ItemDAOImpl implements ItemDAO {
             
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
-                throw new SQLException("Creating item failed, no rows affected.");
+                throw new DatabaseException("Creating item failed, no rows affected.");
             }
             
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
                     return rs.getInt(1);
                 } else {
-                    throw new SQLException("Creating item failed, no ID obtained.");
+                    throw new DatabaseException("Creating item failed, no ID obtained.");
                 }
             }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error adding item: " + e.getMessage(), e, "ITEM_ADD_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public boolean updateItem(Item item) throws SQLException {
+    public boolean updateItem(Item item) throws DatabaseException {
         String sql = "UPDATE items SET item_name=?, description=?, category_id=?, " +
                      "author=?, publisher=?, isbn=?, unit_price=?, selling_price=?, " +
                      "quantity_in_stock=?, reorder_level=?, updated_at=CURRENT_TIMESTAMP " +
@@ -76,11 +79,13 @@ public class ItemDAOImpl implements ItemDAO {
             stmt.setInt(11, item.getItemId());
             
             return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating item: " + e.getMessage(), e, "ITEM_UPDATE_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public boolean deactivateItem(int itemId) throws SQLException {
+    public boolean deactivateItem(int itemId) throws DatabaseException {
         String sql = "UPDATE items SET is_active=false WHERE item_id=?";
         
         try (Connection conn = getConnection();
@@ -88,12 +93,14 @@ public class ItemDAOImpl implements ItemDAO {
             
             stmt.setInt(1, itemId);
             return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error deactivating item: " + e.getMessage(), e, "ITEM_DEACTIVATE_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public Item getItemById(int itemId) throws SQLException {
-        String sql = "SELECT i.*, c.category_name, u.username as created_by_username " +
+    public Item getItemById(int itemId) throws DatabaseException {
+        String sql = "SELECT i.*, c.category_name, u.full_name as created_by_username " +
                      "FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "LEFT JOIN users u ON i.created_by = u.user_id " +
@@ -110,11 +117,13 @@ public class ItemDAOImpl implements ItemDAO {
                 }
                 return null;
             }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting item by ID: " + e.getMessage(), e, "ITEM_GET_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public List<Item> getAllActiveItems() throws SQLException {
+    public List<Item> getAllActiveItems() throws DatabaseException {
         String sql = "SELECT i.*, c.category_name FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "WHERE i.is_active = true ORDER BY i.item_name";
@@ -128,11 +137,19 @@ public class ItemDAOImpl implements ItemDAO {
                 items.add(mapRowToItem(rs));
             }
             return items;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting all active items: " + e.getMessage(), e, "ITEM_LIST_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public List<Item> searchItems(String searchTerm) throws SQLException {
+    public List<Item> getActiveItems() throws DatabaseException {
+        // This is just an alias for getAllActiveItems()
+        return getAllActiveItems();
+    }
+
+    @Override
+    public List<Item> searchItems(String searchTerm) throws DatabaseException {
         String sql = "SELECT i.*, c.category_name FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "WHERE i.is_active = true AND " +
@@ -154,11 +171,13 @@ public class ItemDAOImpl implements ItemDAO {
                 }
                 return items;
             }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error searching items: " + e.getMessage(), e, "ITEM_SEARCH_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public List<Item> getItemsByCategory(int categoryId) throws SQLException {
+    public List<Item> getItemsByCategory(int categoryId) throws DatabaseException {
         String sql = "SELECT i.*, c.category_name FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "WHERE i.is_active = true AND i.category_id = ? " +
@@ -176,11 +195,13 @@ public class ItemDAOImpl implements ItemDAO {
                 }
                 return items;
             }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting items by category: " + e.getMessage(), e, "ITEM_CATEGORY_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public List<Item> getLowStockItems() throws SQLException {
+    public List<Item> getLowStockItems() throws DatabaseException {
         String sql = "SELECT i.*, c.category_name FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "WHERE i.is_active = true AND i.quantity_in_stock <= i.reorder_level " +
@@ -195,12 +216,13 @@ public class ItemDAOImpl implements ItemDAO {
                 items.add(mapRowToItem(rs));
             }
             return items;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting low stock items: " + e.getMessage(), e, "ITEM_LOWSTOCK_ERROR", e.getSQLState());
         }
     }
     
-    
     @Override
-    public List<Item> getOutOfStockItems() throws SQLException {
+    public List<Item> getOutOfStockItems() throws DatabaseException {
         String sql = "SELECT i.*, c.category_name FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
                      "WHERE i.is_active = true AND i.quantity_in_stock = 0 " +
@@ -215,11 +237,13 @@ public class ItemDAOImpl implements ItemDAO {
                 items.add(mapRowToItem(rs));
             }
             return items;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting out of stock items: " + e.getMessage(), e, "ITEM_OUTSTOCK_ERROR", e.getSQLState());
         }
     }
 
     @Override
-    public int getTotalItemCount() throws SQLException {
+    public int getTotalItemCount() throws DatabaseException {
         String sql = "SELECT COUNT(*) FROM items";
         
         try (Connection conn = getConnection();
@@ -230,11 +254,13 @@ public class ItemDAOImpl implements ItemDAO {
                 return rs.getInt(1);
             }
             return 0;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting total item count: " + e.getMessage(), e, "ITEM_COUNT_ERROR", e.getSQLState());
         }
     }
-
+    
     @Override
-    public int getActiveItemCount() throws SQLException {
+    public int getActiveItemCount() throws DatabaseException {
         String sql = "SELECT COUNT(*) FROM items WHERE is_active = true";
         
         try (Connection conn = getConnection();
@@ -245,6 +271,95 @@ public class ItemDAOImpl implements ItemDAO {
                 return rs.getInt(1);
             }
             return 0;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting active item count: " + e.getMessage(), e, "ITEM_ACTIVE_COUNT_ERROR", e.getSQLState());
+        }
+    }
+    
+    @Override
+    public boolean updateItemStock(int itemId, int newQuantity) throws DatabaseException {
+        String sql = "UPDATE items SET quantity_in_stock = ?, updated_at = CURRENT_TIMESTAMP " +
+                     "WHERE item_id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, newQuantity);
+            stmt.setInt(2, itemId);
+            
+            return stmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating item stock: " + e.getMessage(), e, "ITEM_STOCK_UPDATE_ERROR", e.getSQLState());
+        }
+    }
+    
+    @Override
+    public boolean isItemCodeExists(String itemCode) throws DatabaseException {
+        String sql = "SELECT COUNT(*) FROM items WHERE item_code = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, itemCode);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error checking item code existence: " + e.getMessage(), e, "ITEM_CODE_CHECK_ERROR", e.getSQLState());
+        }
+        
+        return false;
+    }
+    
+    @Override
+    public boolean isISBNExists(String isbn) throws DatabaseException {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            return false;
+        }
+        
+        String sql = "SELECT COUNT(*) FROM items WHERE isbn = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, isbn);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error checking ISBN existence: " + e.getMessage(), e, "ISBN_CHECK_ERROR", e.getSQLState());
+        }
+        
+        return false;
+    }
+    
+    @Override
+    public String generateItemCode() throws DatabaseException {
+        String sql = "SELECT MAX(CAST(SUBSTRING(item_code, 3) AS UNSIGNED)) FROM items " +
+                     "WHERE item_code LIKE 'IT%'";
+        
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            int nextNumber = 1;
+            if (rs.next() && rs.getInt(1) > 0) {
+                nextNumber = rs.getInt(1) + 1;
+            }
+            
+            return String.format("IT%06d", nextNumber);
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error generating item code: " + e.getMessage(), e, "ITEM_CODE_GEN_ERROR", e.getSQLState());
         }
     }
 
@@ -263,6 +378,27 @@ public class ItemDAOImpl implements ItemDAO {
         item.setQuantityInStock(rs.getInt("quantity_in_stock"));
         item.setReorderLevel(rs.getInt("reorder_level"));
         item.setActive(rs.getBoolean("is_active"));
+        
+        // Set created_by if available
+        try {
+            item.setCreatedBy(rs.getInt("created_by"));
+        } catch (SQLException e) {
+            // Column might not be present in all queries
+        }
+        
+        // Set created_at if available
+        try {
+            item.setCreatedAt(rs.getTimestamp("created_at"));
+        } catch (SQLException e) {
+            // Column might not be present in all queries
+        }
+        
+        // Set updated_at if available
+        try {
+            item.setUpdatedAt(rs.getTimestamp("updated_at"));
+        } catch (SQLException e) {
+            // Column might not be present in all queries
+        }
         
         // Transient fields
         if (hasColumn(rs, "category_name")) {

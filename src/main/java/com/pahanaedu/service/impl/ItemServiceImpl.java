@@ -1,17 +1,17 @@
 package com.pahanaedu.service.impl;
 
 import com.pahanaedu.dao.interfaces.ItemDAO;
+import com.pahanaedu.dao.interfaces.CategoryDAO;
+import com.pahanaedu.dao.impl.ItemDAOImpl;
+import com.pahanaedu.dao.impl.CategoryDAOImpl;
 import com.pahanaedu.exception.BusinessException;
 import com.pahanaedu.exception.ValidationException;
+import com.pahanaedu.exception.DatabaseException;
 import com.pahanaedu.model.Item;
+import com.pahanaedu.model.Category;
 import com.pahanaedu.service.interfaces.ItemService;
 import com.pahanaedu.util.ValidationUtil;
-import com.pahanaedu.dao.interfaces.CategoryDAO;
-import com.pahanaedu.dao.impl.CategoryDAOImpl;
-import com.pahanaedu.model.Category;
-import com.pahanaedu.dao.impl.ItemDAOImpl;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,9 +32,21 @@ public class ItemServiceImpl implements ItemService {
         item.setCreatedBy(createdBy);
         
         try {
+            // Check if item code already exists
+            if (itemDAO.isItemCodeExists(item.getItemCode())) {
+                throw new BusinessException("Item code already exists: " + item.getItemCode());
+            }
+            
+            // Check if ISBN already exists (if provided)
+            if (item.getIsbn() != null && !item.getIsbn().trim().isEmpty()) {
+                if (itemDAO.isISBNExists(item.getIsbn())) {
+                    throw new BusinessException("ISBN already exists: " + item.getIsbn());
+                }
+            }
+            
             return itemDAO.addItem(item);
-        } catch (SQLException e) {
-            throw new BusinessException("Error adding item to database: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error adding item to database: " + e.getMessage(), e);
         }
     }
 
@@ -43,18 +55,49 @@ public class ItemServiceImpl implements ItemService {
         validateItem(item);
         
         try {
+            // Check if item exists
+            Item existingItem = itemDAO.getItemById(item.getItemId());
+            if (existingItem == null) {
+                throw new BusinessException("Item not found");
+            }
+            
+            // Check if item code is being changed and if new code already exists
+            if (!existingItem.getItemCode().equals(item.getItemCode())) {
+                if (itemDAO.isItemCodeExists(item.getItemCode())) {
+                    throw new BusinessException("Item code already exists: " + item.getItemCode());
+                }
+            }
+            
+            // Check if ISBN is being changed and if new ISBN already exists
+            if (item.getIsbn() != null && !item.getIsbn().trim().isEmpty()) {
+                if (!item.getIsbn().equals(existingItem.getIsbn()) && itemDAO.isISBNExists(item.getIsbn())) {
+                    throw new BusinessException("ISBN already exists: " + item.getIsbn());
+                }
+            }
+            
             return itemDAO.updateItem(item);
-        } catch (SQLException e) {
-            throw new BusinessException("Error updating item: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error updating item: " + e.getMessage(), e);
         }
     }
 
     @Override
     public boolean deactivateItem(int itemId) throws BusinessException {
         try {
+            // Check if item exists
+            Item item = itemDAO.getItemById(itemId);
+            if (item == null) {
+                throw new BusinessException("Item not found");
+            }
+            
+            // Check if item has stock
+            if (item.getQuantityInStock() > 0) {
+                throw new BusinessException("Cannot deactivate item with existing stock. Current stock: " + item.getQuantityInStock());
+            }
+            
             return itemDAO.deactivateItem(itemId);
-        } catch (SQLException e) {
-            throw new BusinessException("Error deactivating item: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error deactivating item: " + e.getMessage(), e);
         }
     }
 
@@ -62,8 +105,8 @@ public class ItemServiceImpl implements ItemService {
     public Item getItemById(int itemId) throws BusinessException {
         try {
             return itemDAO.getItemById(itemId);
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving item: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving item: " + e.getMessage(), e);
         }
     }
 
@@ -71,8 +114,8 @@ public class ItemServiceImpl implements ItemService {
     public List<Item> getAllActiveItems() throws BusinessException {
         try {
             return itemDAO.getAllActiveItems();
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving active items: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving active items: " + e.getMessage(), e);
         }
     }
     
@@ -85,9 +128,12 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> searchItems(String searchTerm) throws BusinessException {
         try {
+            if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                return getAllActiveItems();
+            }
             return itemDAO.searchItems(searchTerm);
-        } catch (SQLException e) {
-            throw new BusinessException("Error searching items: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error searching items: " + e.getMessage(), e);
         }
     }
 
@@ -95,8 +141,8 @@ public class ItemServiceImpl implements ItemService {
     public List<Item> getItemsByCategory(int categoryId) throws BusinessException {
         try {
             return itemDAO.getItemsByCategory(categoryId);
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving items by category: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving items by category: " + e.getMessage(), e);
         }
     }
 
@@ -104,68 +150,77 @@ public class ItemServiceImpl implements ItemService {
     public List<Item> getLowStockItems() throws BusinessException {
         try {
             return itemDAO.getLowStockItems();
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving low stock items: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving low stock items: " + e.getMessage(), e);
         }
     }
-    
     
     @Override
     public List<Category> getAllCategories() throws BusinessException {
         try {
             return categoryDAO.getAllCategories();
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving categories: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving categories: " + e.getMessage(), e);
         }
     }
     
-    
-    
     @Override
     public boolean increaseStock(int itemId, int quantity) throws BusinessException {
+        if (quantity <= 0) {
+            throw new BusinessException("Quantity to increase must be positive");
+        }
+        
         try {
             Item item = itemDAO.getItemById(itemId);
             if (item == null) {
                 throw new BusinessException("Item not found");
             }
-            item.setQuantityInStock(item.getQuantityInStock() + quantity);
-            return itemDAO.updateItem(item);
-        } catch (SQLException e) {
-            throw new BusinessException("Error increasing stock: " + e.getMessage());
+            
+            int newQuantity = item.getQuantityInStock() + quantity;
+            return itemDAO.updateItemStock(itemId, newQuantity);
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error increasing stock: " + e.getMessage(), e);
         }
     }
 
     @Override
     public boolean decreaseStock(int itemId, int quantity) throws BusinessException {
+        if (quantity <= 0) {
+            throw new BusinessException("Quantity to decrease must be positive");
+        }
+        
         try {
             Item item = itemDAO.getItemById(itemId);
             if (item == null) {
                 throw new BusinessException("Item not found");
             }
+            
             if (item.getQuantityInStock() < quantity) {
-                throw new BusinessException("Insufficient stock");
+                throw new BusinessException("Insufficient stock. Available: " + item.getQuantityInStock() + ", Requested: " + quantity);
             }
-            item.setQuantityInStock(item.getQuantityInStock() - quantity);
-            return itemDAO.updateItem(item);
-        } catch (SQLException e) {
-            throw new BusinessException("Error decreasing stock: " + e.getMessage());
+            
+            int newQuantity = item.getQuantityInStock() - quantity;
+            return itemDAO.updateItemStock(itemId, newQuantity);
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error decreasing stock: " + e.getMessage(), e);
         }
     }
 
     @Override
     public boolean adjustStock(int itemId, int newQuantity) throws BusinessException {
+        if (newQuantity < 0) {
+            throw new BusinessException("Stock quantity cannot be negative");
+        }
+        
         try {
             Item item = itemDAO.getItemById(itemId);
             if (item == null) {
                 throw new BusinessException("Item not found");
             }
-            if (newQuantity < 0) {
-                throw new BusinessException("Stock quantity cannot be negative");
-            }
-            item.setQuantityInStock(newQuantity);
-            return itemDAO.updateItem(item);
-        } catch (SQLException e) {
-            throw new BusinessException("Error adjusting stock: " + e.getMessage());
+            
+            return itemDAO.updateItemStock(itemId, newQuantity);
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error adjusting stock: " + e.getMessage(), e);
         }
     }
 
@@ -173,8 +228,8 @@ public class ItemServiceImpl implements ItemService {
     public List<Item> getOutOfStockItems() throws BusinessException {
         try {
             return itemDAO.getOutOfStockItems();
-        } catch (SQLException e) {
-            throw new BusinessException("Error retrieving out of stock items: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving out of stock items: " + e.getMessage(), e);
         }
     }
 
@@ -190,8 +245,8 @@ public class ItemServiceImpl implements ItemService {
             }
             
             return categoryCount;
-        } catch (SQLException e) {
-            throw new BusinessException("Error getting item count by category: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error getting item count by category: " + e.getMessage(), e);
         }
     }
 
@@ -206,8 +261,8 @@ public class ItemServiceImpl implements ItemService {
             }
             
             return totalValue;
-        } catch (SQLException e) {
-            throw new BusinessException("Error calculating inventory value: " + e.getMessage());
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error calculating inventory value: " + e.getMessage(), e);
         }
     }
 
@@ -216,18 +271,22 @@ public class ItemServiceImpl implements ItemService {
         
         if (item.getItemCode() == null || item.getItemCode().trim().isEmpty()) {
             errors.put("itemCode", Arrays.asList("Item code is required"));
+        } else if (item.getItemCode().length() > 20) {
+            errors.put("itemCode", Arrays.asList("Item code must not exceed 20 characters"));
         }
         
         if (item.getItemName() == null || item.getItemName().trim().isEmpty()) {
             errors.put("itemName", Arrays.asList("Item name is required"));
+        } else if (item.getItemName().length() > 100) {
+            errors.put("itemName", Arrays.asList("Item name must not exceed 100 characters"));
         }
         
         if (item.getCategoryId() <= 0) {
             errors.put("categoryId", Arrays.asList("Category is required"));
         }
         
-        if (item.getUnitPrice() <= 0) {
-            errors.put("unitPrice", Arrays.asList("Unit price must be positive"));
+        if (item.getUnitPrice() < 0) {
+            errors.put("unitPrice", Arrays.asList("Unit price cannot be negative"));
         }
         
         if (item.getSellingPrice() <= 0) {
@@ -244,6 +303,14 @@ public class ItemServiceImpl implements ItemService {
         
         if (item.getReorderLevel() < 0) {
             errors.put("reorderLevel", Arrays.asList("Reorder level cannot be negative"));
+        }
+        
+        // Validate ISBN format if provided
+        if (item.getIsbn() != null && !item.getIsbn().trim().isEmpty()) {
+            String isbn = item.getIsbn().replaceAll("-", "").replaceAll(" ", "");
+            if (isbn.length() != 10 && isbn.length() != 13) {
+                errors.put("isbn", Arrays.asList("ISBN must be 10 or 13 digits"));
+            }
         }
         
         if (!errors.isEmpty()) {
