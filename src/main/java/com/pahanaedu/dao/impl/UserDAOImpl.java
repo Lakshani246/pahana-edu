@@ -18,7 +18,7 @@ import java.util.List;
 public class UserDAOImpl implements UserDAO {
     
     private Connection getConnection() throws SQLException {
-        return DBConnection.getInstance().getConnection();
+        return DBConnection.getConnection();
     }
     
     @Override

@@ -5,85 +5,74 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Singleton class for database connection management
- * This class ensures only one database connection instance is created
+ * Factory class for database connection management
+ * This class creates new database connections using the Factory pattern
  */
 public class DBConnection {
-    
-    private static DBConnection instance;
-    private Connection connection;
     
     // Database configuration constants
     private static final String DB_URL = "jdbc:mysql://localhost:3306/pahana_edu_db?useSSL=false&serverTimezone=UTC";
     private static final String DB_USERNAME = "root";
-    private static final String DB_PASSWORD = "2001kkkK@@"; 
+    private static final String DB_PASSWORD = "2001kkkK@@";
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
     
-    /**
-     * Private constructor to prevent instantiation from outside
-     */
-    private DBConnection() throws SQLException {
+    // Static block to load driver once when class is first loaded
+    static {
         try {
             // Load MySQL JDBC driver
             Class.forName(DB_DRIVER);
-            
-            // Create database connection
-            this.connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-            
-            System.out.println("Database connection established successfully!");
-            
+            System.out.println("MySQL JDBC Driver loaded successfully!");
         } catch (ClassNotFoundException ex) {
-            throw new SQLException("Database Driver not found: " + ex.getMessage());
-        } catch (SQLException ex) {
-            throw new SQLException("Failed to connect to database: " + ex.getMessage());
+            throw new RuntimeException("Database Driver not found: " + ex.getMessage(), ex);
         }
     }
     
     /**
-     * Get singleton instance of DBConnection
-     * @return DBConnection instance
+     * Private constructor to prevent instantiation
+     * This class only provides static methods
+     */
+    private DBConnection() {
+        // Private constructor - no instances needed
+    }
+    
+    /**
+     * Create and return a new database connection
+     * @return New Connection object
      * @throws SQLException if connection fails
      */
-    public static DBConnection getInstance() throws SQLException {
-        if (instance == null) {
-            instance = new DBConnection();
-        } else if (instance.getConnection().isClosed()) {
-            instance = new DBConnection();
-        }
-        return instance;
-    }
-    
-    /**
-     * Get database connection
-     * @return Connection object
-     */
-    public Connection getConnection() {
-        return connection;
-    }
-    
-    /**
-     * Close database connection
-     */
-    public void closeConnection() {
+    public static Connection getConnection() throws SQLException {
         try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                System.out.println("Database connection closed.");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error closing connection: " + e.getMessage());
+            Connection connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            return connection;
+        } catch (SQLException ex) {
+            throw new SQLException("Failed to connect to database: " + ex.getMessage(), ex);
         }
     }
     
     /**
-     * Check if connection is valid
+     * Check if a connection is valid
+     * @param connection Connection to check
      * @return true if connection is valid, false otherwise
      */
-    public boolean isConnectionValid() {
+    public static boolean isConnectionValid(Connection connection) {
         try {
             return connection != null && !connection.isClosed() && connection.isValid(5);
         } catch (SQLException e) {
             return false;
+        }
+    }
+    
+    /**
+     * Close a connection safely
+     * @param connection Connection to close
+     */
+    public static void closeConnection(Connection connection) {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error closing connection: " + e.getMessage());
         }
     }
 }

@@ -1,0 +1,544 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Bill - Pahana Edu</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <style>
+        .bill-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .item-row {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .item-row:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card {
+            position: sticky;
+            top: 20px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #28a745;
+        }
+        .remove-item-btn {
+            cursor: pointer;
+            color: #dc3545;
+        }
+        .remove-item-btn:hover {
+            color: #c82333;
+        }
+        .stock-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .discount-input {
+            max-width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <jsp:include page="/includes/navbar.jsp" />
+    
+    <div class="container-fluid">
+        <div class="row">
+            <jsp:include page="/includes/sidebar.jsp" />
+            
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Create New Bill</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="saveDraft()">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                            <a href="${pageContext.request.contextPath}/bill/list" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <jsp:include page="/includes/messages.jsp" />
+                
+                <form id="billForm" action="${pageContext.request.contextPath}/bill/create" method="post" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Customer Selection -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Customer Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="customerId" class="form-label">Select Customer *</label>
+                                            <select class="form-select select2" id="customerId" name="customerId" required>
+                                                <option value="">-- Select Customer --</option>
+                                                <c:forEach items="${customers}" var="customer">
+                                                    <option value="${customer.customerId}" 
+                                                        ${selectedCustomer != null && selectedCustomer.customerId == customer.customerId ? 'selected' : ''}
+                                                        data-phone="${customer.telephone}"
+                                                        data-address="${customer.address}">
+                                                        ${customer.customerName} - ${customer.accountNumber}
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                            <div class="invalid-feedback">Please select a customer</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Bill Number</label>
+                                            <input type="text" class="form-control" value="${nextBillNumber}" readonly>
+                                            <small class="text-muted">Auto-generated</small>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3" id="customerDetails" style="display: none;">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Phone</label>
+                                            <input type="text" class="form-control" id="customerPhone" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Address</label>
+                                            <input type="text" class="form-control" id="customerAddress" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Items Selection -->
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Bill Items</h5>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="addItemRow()">
+                                        <i class="fas fa-plus"></i> Add Item
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="itemsContainer">
+                                        <!-- Item rows will be added here dynamically -->
+                                        <c:if test="${clonedBill != null}">
+                                            <c:forEach items="${clonedBill.billItems}" var="item" varStatus="status">
+                                                <script>
+                                                    $(document).ready(function() {
+                                                        addItemRow();
+                                                        var row = $('#itemsContainer .item-row').last();
+                                                        row.find('select[name="itemId[]"]').val(${item.itemId}).trigger('change');
+                                                        row.find('input[name="quantity[]"]').val(${item.quantity});
+                                                        row.find('input[name="itemDiscount[]"]').val(${item.discountPercentage});
+                                                    });
+                                                </script>
+                                            </c:forEach>
+                                        </c:if>
+                                    </div>
+                                    <div id="noItemsMessage" class="text-center text-muted py-4">
+                                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                        <p>No items added yet. Click "Add Item" to start.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Payment Information -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Payment Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="paymentMethod" class="form-label">Payment Method *</label>
+                                            <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                                                <c:forEach items="${paymentMethods}" var="method">
+                                                    <option value="${method}" ${method == 'CASH' ? 'selected' : ''}>
+                                                        <i class="${method.iconClass}"></i> ${method.displayName}
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="paymentStatus" class="form-label">Payment Status *</label>
+                                            <select class="form-select" id="paymentStatus" name="paymentStatus" required>
+                                                <option value="PENDING">Pending</option>
+                                                <option value="PAID" selected>Paid</option>
+                                                <option value="PARTIAL">Partial Payment</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4" id="referenceField" style="display: none;">
+                                            <label for="paymentReference" class="form-label">Reference Number</label>
+                                            <input type="text" class="form-control" id="paymentReference" name="paymentReference"
+                                                   placeholder="Cheque/Transaction No.">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <label for="notes" class="form-label">Notes (Optional)</label>
+                                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Summary Sidebar -->
+                        <div class="col-lg-4">
+                            <div class="card summary-card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Bill Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="summary-row">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">Rs. 0.00</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Discount (%):</span>
+                                        <input type="number" class="form-control form-control-sm discount-input" 
+                                               id="discountPercentage" name="discountPercentage" 
+                                               min="0" max="100" step="0.01" value="0" onchange="calculateTotals()">
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Discount Amount:</span>
+                                        <span id="discountAmount">Rs. 0.00</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Tax (${defaultTaxRate}%):</span>
+                                        <input type="hidden" id="taxPercentage" name="taxPercentage" value="${defaultTaxRate}">
+                                        <span id="taxAmount">Rs. 0.00</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Total Amount:</span>
+                                        <span id="totalAmount">Rs. 0.00</span>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="printAfterSave">
+                                            <label class="form-check-label" for="printAfterSave">
+                                                Print bill after saving
+                                            </label>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" name="submitAction" value="save" class="btn btn-primary">
+                                                <i class="fas fa-save"></i> Save Bill
+                                            </button>
+                                            <button type="submit" name="submitAction" value="saveAndNew" class="btn btn-outline-primary">
+                                                <i class="fas fa-plus"></i> Save & Create New
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Item Row Template -->
+    <template id="itemRowTemplate">
+        <div class="item-row">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">Item *</label>
+                    <select class="form-select item-select" name="itemId[]" required onchange="updateItemDetails(this)">
+                        <option value="">-- Select Item --</option>
+                        <c:forEach items="${items}" var="item">
+                            <option value="${item.itemId}" 
+                                data-price="${item.sellingPrice}"
+                                data-stock="${item.quantityInStock}"
+                                data-code="${item.itemCode}">
+                                ${item.itemName} - ${item.itemCode}
+                            </option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Price</label>
+                    <input type="number" class="form-control" name="unitPrice[]" readonly>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Quantity *</label>
+                    <input type="number" class="form-control" name="quantity[]" min="1" value="1" required onchange="calculateItemTotal(this)">
+                    <small class="text-muted stock-info"></small>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Discount %</label>
+                    <input type="number" class="form-control" name="itemDiscount[]" min="0" max="100" step="0.01" value="0" onchange="calculateItemTotal(this)">
+                </div>
+                <div class="col-md-1 mb-2">
+                    <label class="form-label">Total</label>
+                    <div class="item-total">Rs. 0.00</div>
+                </div>
+                <div class="col-md-1 mb-2 text-center">
+                    <span class="remove-item-btn" onclick="removeItemRow(this)" title="Remove item">
+                        <i class="fas fa-trash"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <jsp:include page="/includes/footer.jsp" />
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5'
+            });
+            
+            // Customer selection change
+            $('#customerId').on('change', function() {
+                var selectedOption = $(this).find('option:selected');
+                if (selectedOption.val()) {
+                    $('#customerPhone').val(selectedOption.data('phone'));
+                    $('#customerAddress').val(selectedOption.data('address'));
+                    $('#customerDetails').show();
+                    
+                    // Check if customer can be billed
+                    checkCustomerStatus(selectedOption.val());
+                } else {
+                    $('#customerDetails').hide();
+                }
+            });
+            
+            // Payment method change
+            $('#paymentMethod').on('change', function() {
+                var method = $(this).val();
+                if (method === 'CHEQUE' || method === 'BANK_TRANSFER') {
+                    $('#referenceField').show();
+                } else {
+                    $('#referenceField').hide();
+                    $('#paymentReference').val('');
+                }
+            });
+            
+            // Form validation
+            $('#billForm').on('submit', function(e) {
+                if (!this.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                // Check if at least one item is added
+                if ($('#itemsContainer .item-row').length === 0) {
+                    e.preventDefault();
+                    alert('Please add at least one item to the bill');
+                    return false;
+                }
+                
+                // If print is checked, change submit action
+                if ($('#printAfterSave').is(':checked')) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'submitAction',
+                        value: 'saveAndPrint'
+                    }).appendTo(this);
+                }
+                
+                $(this).addClass('was-validated');
+            });
+            
+            // Add first item row if not cloning
+            if (!${clonedBill != null}) {
+                addItemRow();
+            }
+        });
+        
+        function addItemRow() {
+            var template = document.getElementById('itemRowTemplate');
+            var clone = template.content.cloneNode(true);
+            $('#itemsContainer').append(clone);
+            $('#noItemsMessage').hide();
+            
+            // Initialize select2 for new row
+            $('#itemsContainer .item-row:last .item-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+            
+            calculateTotals();
+        }
+        
+        function removeItemRow(btn) {
+            if ($('#itemsContainer .item-row').length > 1) {
+                $(btn).closest('.item-row').remove();
+                calculateTotals();
+            } else {
+                alert('At least one item is required');
+            }
+            
+            if ($('#itemsContainer .item-row').length === 0) {
+                $('#noItemsMessage').show();
+            }
+        }
+        
+        function updateItemDetails(select) {
+            var selectedOption = $(select).find('option:selected');
+            var row = $(select).closest('.item-row');
+            
+            if (selectedOption.val()) {
+                var price = selectedOption.data('price');
+                var stock = selectedOption.data('stock');
+                
+                row.find('input[name="unitPrice[]"]').val(price);
+                row.find('.stock-info').text('Stock: ' + stock);
+                
+                // Check stock availability
+                var quantity = row.find('input[name="quantity[]"]').val();
+                checkStockAvailability(select, quantity);
+                
+                calculateItemTotal(select);
+            } else {
+                row.find('input[name="unitPrice[]"]').val('');
+                row.find('.stock-info').text('');
+                row.find('.item-total').text('Rs. 0.00');
+            }
+        }
+        
+        function calculateItemTotal(input) {
+            var row = $(input).closest('.item-row');
+            var price = parseFloat(row.find('input[name="unitPrice[]"]').val()) || 0;
+            var quantity = parseInt(row.find('input[name="quantity[]"]').val()) || 0;
+            var discount = parseFloat(row.find('input[name="itemDiscount[]"]').val()) || 0;
+            
+            var subtotal = price * quantity;
+            var discountAmount = subtotal * (discount / 100);
+            var total = subtotal - discountAmount;
+            
+            row.find('.item-total').text('Rs. ' + total.toFixed(2));
+            
+            // Check stock if quantity changed
+            if ($(input).attr('name') === 'quantity[]') {
+                var itemSelect = row.find('select[name="itemId[]"]');
+                checkStockAvailability(itemSelect[0], quantity);
+            }
+            
+            calculateTotals();
+        }
+        
+        function calculateTotals() {
+            var subtotal = 0;
+            
+            // Calculate subtotal from all items
+            $('#itemsContainer .item-row').each(function() {
+                var price = parseFloat($(this).find('input[name="unitPrice[]"]').val()) || 0;
+                var quantity = parseInt($(this).find('input[name="quantity[]"]').val()) || 0;
+                var discount = parseFloat($(this).find('input[name="itemDiscount[]"]').val()) || 0;
+                
+                var itemSubtotal = price * quantity;
+                var itemDiscount = itemSubtotal * (discount / 100);
+                subtotal += (itemSubtotal - itemDiscount);
+            });
+            
+            // Calculate bill-level discount
+            var discountPercentage = parseFloat($('#discountPercentage').val()) || 0;
+            var discountAmount = subtotal * (discountPercentage / 100);
+            
+            // Calculate tax on discounted amount
+            var afterDiscount = subtotal - discountAmount;
+            var taxPercentage = parseFloat($('#taxPercentage').val()) || 0;
+            var taxAmount = afterDiscount * (taxPercentage / 100);
+            
+            // Calculate total
+            var totalAmount = afterDiscount + taxAmount;
+            
+            // Update display
+            $('#subtotal').text('Rs. ' + subtotal.toFixed(2));
+            $('#discountAmount').text('Rs. ' + discountAmount.toFixed(2));
+            $('#taxAmount').text('Rs. ' + taxAmount.toFixed(2));
+            $('#totalAmount').text('Rs. ' + totalAmount.toFixed(2));
+        }
+        
+        function checkCustomerStatus(customerId) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/bill/create',
+                type: 'POST',
+                data: {
+                    action: 'ajax',
+                    ajaxAction: 'getCustomer',
+                    customerId: customerId
+                },
+                success: function(response) {
+                    if (response.success && !response.canBeBilled) {
+                        alert('Warning: ' + response.message);
+                    }
+                }
+            });
+        }
+        
+        function checkStockAvailability(itemSelect, quantity) {
+            var selectedOption = $(itemSelect).find('option:selected');
+            var stock = parseInt(selectedOption.data('stock')) || 0;
+            var row = $(itemSelect).closest('.item-row');
+            
+            if (quantity > stock) {
+                row.find('.stock-info').html('<span class="text-danger">Insufficient stock!</span>');
+                row.find('input[name="quantity[]"]').addClass('is-invalid');
+            } else {
+                row.find('.stock-info').html('Stock: ' + stock);
+                row.find('input[name="quantity[]"]').removeClass('is-invalid');
+            }
+        }
+        
+        function saveDraft() {
+            var billData = {
+                customerId: $('#customerId').val(),
+                items: []
+            };
+            
+            $('#itemsContainer .item-row').each(function() {
+                var itemId = $(this).find('select[name="itemId[]"]').val();
+                if (itemId) {
+                    billData.items.push({
+                        itemId: itemId,
+                        quantity: $(this).find('input[name="quantity[]"]').val(),
+                        discount: $(this).find('input[name="itemDiscount[]"]').val()
+                    });
+                }
+            });
+            
+            $.ajax({
+                url: '${pageContext.request.contextPath}/bill/create',
+                type: 'POST',
+                data: {
+                    action: 'ajax',
+                    ajaxAction: 'saveDraft',
+                    billData: JSON.stringify(billData)
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Draft saved successfully!');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

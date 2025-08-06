@@ -9,7 +9,7 @@
     <title>Dashboard - Pahana Edu Online Billing System</title>
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Custom CSS -->
@@ -23,7 +23,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Include Sidebar -->
-            <jsp:include page="/includes/sidebar.jsp" />
+            <jsp:include page="/includes/sidebar.jsp" /> 
             
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -229,10 +229,8 @@
     <!-- Include Footer -->
     <jsp:include page="/includes/footer.jsp" />
     
-    <!-- jQuery -->
-    <script src="${pageContext.request.contextPath}/assets/js/jquery.min.js"></script>
-    <!-- Bootstrap JS -->
-    <script src="${pageContext.request.contextPath}/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom JS -->

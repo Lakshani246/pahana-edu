@@ -4,6 +4,9 @@ import com.pahanaedu.model.Item;
 import com.pahanaedu.exception.BusinessException;
 import com.pahanaedu.exception.ValidationException;
 import java.util.List;
+import java.util.Map;
+
+import com.pahanaedu.model.Category;
 
 public interface ItemService {
     int addItem(Item item, int createdBy) throws ValidationException, BusinessException;
@@ -12,9 +15,11 @@ public interface ItemService {
     
     Item getItemById(int itemId) throws BusinessException;
     List<Item> getAllActiveItems() throws BusinessException;
+    List<Item> getActiveItems() throws BusinessException;
     List<Item> searchItems(String searchTerm) throws BusinessException;
     List<Item> getItemsByCategory(int categoryId) throws BusinessException;
     List<Item> getLowStockItems() throws BusinessException;
+    List<Category> getAllCategories() throws BusinessException;
     
     // Business logic methods
     boolean increaseStock(int itemId, int quantity) throws BusinessException;

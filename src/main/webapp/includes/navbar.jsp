@@ -30,22 +30,25 @@
                     </a>
                 </li>
                 
+                
                 <!-- Billing Dropdown -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="billingDropdown" role="button" 
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-file-invoice"></i> Billing
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="billingDropdown">
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/create">
-                            <i class="fas fa-plus"></i> Create Bill</a></li>
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/list">
-                            <i class="fas fa-list"></i> Bill List</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/search">
-                            <i class="fas fa-search"></i> Search Bills</a></li>
-                    </ul>
-                </li>
+				<li class="nav-item dropdown">
+				    <a class="nav-link dropdown-toggle" href="#" id="billingDropdown" role="button" 
+				       data-bs-toggle="dropdown" aria-expanded="false">
+				        <i class="fas fa-file-invoice"></i> Billing
+				    </a>
+				    <ul class="dropdown-menu" aria-labelledby="billingDropdown">
+				        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/create">
+				            <i class="fas fa-plus"></i> Create Bill</a></li>
+				        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/list">
+				            <i class="fas fa-list"></i> View Bills</a></li>
+				        <li><hr class="dropdown-divider"></li>
+				        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/list?filter=today">
+				            <i class="fas fa-calendar-day"></i> Today's Bills</a></li>
+				        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/bill/list?filter=pending">
+				            <i class="fas fa-clock"></i> Pending Bills</a></li>
+				    </ul>
+				</li>
                 
                 <!-- Customers Dropdown -->
                 <li class="nav-item dropdown">
