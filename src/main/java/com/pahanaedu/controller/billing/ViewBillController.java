@@ -198,10 +198,6 @@ public class ViewBillController extends HttpServlet {
                     handleCancelBill(request, response, billId, userId);
                     break;
                     
-                case "clone":
-                    response.sendRedirect(request.getContextPath() + "/bill/create?clone=" + billId);
-                    break;
-                    
                 case "edit":
                     response.sendRedirect(request.getContextPath() + "/bill/edit?id=" + billId);
                     break;
@@ -397,7 +393,6 @@ public class ViewBillController extends HttpServlet {
         boolean canProcessPayment = false;
         boolean canPrint = true;
         boolean canEmail = true;
-        boolean canClone = true;
         
         try {
             if (currentUser.isAdmin()) {
@@ -433,7 +428,6 @@ public class ViewBillController extends HttpServlet {
         request.setAttribute("canProcessPayment", canProcessPayment);
         request.setAttribute("canPrint", canPrint);
         request.setAttribute("canEmail", canEmail);
-        request.setAttribute("canClone", canClone);
     }
     
     @Override

@@ -27,12 +27,20 @@ public interface CustomerDAO {
     boolean updateCustomer(Customer customer) throws DatabaseException;
     
     /**
-     * Delete a customer by ID (soft delete - sets isActive to false)
-     * @param customerId ID of the customer to delete
-     * @return true if deletion successful, false otherwise
+     * Deactivate a customer by ID (sets isActive to false)
+     * @param customerId ID of the customer to deactivate
+     * @return true if deactivation successful, false otherwise
      * @throws DatabaseException if database operation fails
      */
-    boolean deleteCustomer(int customerId) throws DatabaseException;
+    boolean deactivateCustomer(int customerId) throws DatabaseException;
+
+    /**
+     * Activate a customer by ID (sets isActive to true)
+     * @param customerId ID of the customer to activate
+     * @return true if activation successful, false otherwise
+     * @throws DatabaseException if database operation fails
+     */
+    boolean activateCustomer(int customerId) throws DatabaseException;
     
     /**
      * Get a customer by ID

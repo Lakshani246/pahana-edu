@@ -39,6 +39,7 @@ public class CustomerListController extends HttpServlet {
             // Get search parameter if any
             String searchTerm = request.getParameter("search");
             String city = request.getParameter("city");
+            String statusFilter = request.getParameter("status"); // Optional: for future filtering
             
             List<Customer> customers;
             
@@ -50,8 +51,20 @@ public class CustomerListController extends HttpServlet {
                 customers = customerService.getCustomersByCity(city);
                 request.setAttribute("selectedCity", city);
             } else {
-                customers = customerService.getActiveCustomers();
+                // IMPORTANT CHANGE: Use getAllCustomers() instead of getActiveCustomers()
+                // This will show both active and inactive customers
+                customers = customerService.getAllCustomers();
             }
+            
+            // Optional: If you want to add status filtering later
+//            if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+//                if ("active".equalsIgnoreCase(statusFilter)) {
+//                    customers = customerService.getActiveCustomers();
+//                } else if ("inactive".equalsIgnoreCase(statusFilter)) {
+//                    customers = customerService.getInactiveCustomers();
+//                }
+//                request.setAttribute("statusFilter", statusFilter);
+//            }
             
             // Get all cities for filter dropdown
             List<String> cities = customerService.getAllCities();
@@ -94,7 +107,8 @@ public class CustomerListController extends HttpServlet {
             throws ServletException, IOException {
         
         try {
-            List<Customer> customers = customerService.getActiveCustomers();
+            // Export ALL customers, not just active ones
+            List<Customer> customers = customerService.getAllCustomers();
             String csv = customerService.exportCustomersToCSV(customers);
             
             // Set response headers for CSV download

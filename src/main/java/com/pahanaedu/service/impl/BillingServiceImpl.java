@@ -780,39 +780,6 @@ public class BillingServiceImpl implements BillingService {
         throw new BusinessException("Email functionality not yet implemented");
     }
     
-    @Override
-    public Bill cloneBill(int billId) throws DatabaseException, BusinessException {
-        Bill originalBill = getBillById(billId);
-        if (originalBill == null) {
-            throw new BusinessException("Bill not found");
-        }
-        
-        // Create new bill with same details
-        Bill clonedBill = new Bill();
-        clonedBill.setCustomerId(originalBill.getCustomerId());
-        clonedBill.setCustomer(originalBill.getCustomer());
-        clonedBill.setPaymentMethod(originalBill.getPaymentMethod());
-        clonedBill.setPaymentStatus("PENDING"); // New bills start as pending
-        clonedBill.setDiscountPercentage(originalBill.getDiscountPercentage());
-        clonedBill.setTaxPercentage(originalBill.getTaxPercentage());
-        clonedBill.setNotes("Cloned from bill: " + originalBill.getBillNumber());
-        
-        // Clone items
-        List<BillItem> clonedItems = new ArrayList<>();
-        for (BillItem originalItem : originalBill.getBillItems()) {
-            BillItem clonedItem = new BillItem();
-            clonedItem.setItemId(originalItem.getItemId());
-            clonedItem.setItem(originalItem.getItem());
-            clonedItem.setQuantity(originalItem.getQuantity());
-            clonedItem.setUnitPrice(originalItem.getUnitPrice());
-            clonedItem.setDiscountPercentage(originalItem.getDiscountPercentage());
-            clonedItems.add(clonedItem);
-        }
-        clonedBill.setBillItems(clonedItems);
-        
-        return clonedBill;
-    }
-    
     /**
      * Helper method to update stock after sale
      */

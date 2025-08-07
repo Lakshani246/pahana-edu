@@ -67,17 +67,6 @@ public class CreateBillController extends HttpServlet {
             // Get payment methods for dropdown
             PaymentMethod[] paymentMethods = PaymentMethod.values();
             
-            // Check if cloning an existing bill
-            String cloneBillId = request.getParameter("clone");
-            if (cloneBillId != null && !cloneBillId.isEmpty()) {
-                try {
-                    int billId = Integer.parseInt(cloneBillId);
-                    Bill clonedBill = billingService.cloneBill(billId);
-                    request.setAttribute("clonedBill", clonedBill);
-                } catch (Exception e) {
-                    log("Error cloning bill: " + e.getMessage(), e);
-                }
-            }
             
             // Check if customer is pre-selected
             String customerId = request.getParameter("customerId");

@@ -91,8 +91,6 @@
                         <ul class="dropdown-menu" aria-labelledby="reportDropdown">
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/daily">
                                 <i class="fas fa-calendar-day"></i> Daily Sales</a></li>
-                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/monthly">
-                                <i class="fas fa-calendar-alt"></i> Monthly Report</a></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/stock">
                                 <i class="fas fa-boxes"></i> Stock Report</a></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/customer">

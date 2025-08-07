@@ -37,14 +37,22 @@ public interface CustomerService {
             throws ValidationException, DatabaseException, BusinessException;
     
     /**
-     * Delete a customer (soft delete)
-     * @param customerId Customer ID to delete
-     * @return true if deletion successful
+     * Activate a customer
+     * @param customerId Customer ID to activate
+     * @return true if activation successful
+     * @throws DatabaseException if database operation fails
+     * @throws BusinessException if business rule violation occurs
+     */
+    boolean activateCustomer(int customerId) throws DatabaseException, BusinessException;
+
+    /**
+     * Deactivate a customer (soft delete)
+     * @param customerId Customer ID to deactivate
+     * @return true if deactivation successful
      * @throws DatabaseException if database operation fails
      * @throws BusinessException if customer has pending bills
      */
-    boolean deleteCustomer(int customerId) 
-            throws DatabaseException, BusinessException;
+    boolean deactivateCustomer(int customerId) throws DatabaseException, BusinessException;
     
     /**
      * Get customer by ID

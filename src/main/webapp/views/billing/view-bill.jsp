@@ -121,14 +121,12 @@
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <button type="button" class="btn btn-primary" onclick="openPrintView()">
-							    <i class="fas fa-print"></i> Print
-							</button>
+                                <i class="fas fa-print"></i> Print
+                            </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="downloadPDF()">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="sendEmail()">
-                                <i class="fas fa-envelope"></i> Email
-                            </button>
+                            <!-- Email button removed -->
                         </div>
                         <a href="${pageContext.request.contextPath}/bill/list" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left"></i> Back
@@ -298,12 +296,7 @@
                                                 </button>
                                             </c:if>
                                             
-                                            <c:if test="${canClone}">
-                                                <a href="${pageContext.request.contextPath}/bill/create?clone=${bill.billId}" 
-                                                   class="btn btn-info action-button">
-                                                    <i class="fas fa-copy"></i> Clone Bill
-                                                </a>
-                                            </c:if>
+                                            
                                             
                                             <c:if test="${canCancel}">
                                                 <button type="button" class="btn btn-danger action-button" 
@@ -396,8 +389,8 @@
                             <div class="card-body">
                                 <div class="d-grid gap-2">
                                     <button type="button" class="btn btn-outline-primary" onclick="openPrintView()">
-									    <i class="fas fa-print"></i> Print Bill
-									</button>
+                                        <i class="fas fa-print"></i> Print Bill
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary" onclick="generateReceipt()">
                                         <i class="fas fa-receipt"></i> Generate Receipt
                                     </button>
@@ -488,39 +481,7 @@
         </div>
     </div>
     
-    <!-- Email Bill Modal -->
-    <div class="modal fade" id="emailModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/bill/view" method="post">
-                    <input type="hidden" name="billAction" value="email">
-                    <input type="hidden" name="billId" value="${bill.billId}">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Email Bill</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="recipientEmail" class="form-label">Recipient Email</label>
-                            <input type="email" class="form-control" id="recipientEmail" name="recipientEmail" 
-                                   value="${bill.customer.email}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Message (Optional)</label>
-                            <textarea class="form-control" rows="3" 
-                                      placeholder="Add a personal message to the email"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Send Email
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Email Bill Modal has been removed -->
     
     <jsp:include page="/includes/footer.jsp" />
     
@@ -549,9 +510,7 @@
             $('#cancelModal').modal('show');
         }
         
-        function sendEmail() {
-            $('#emailModal').modal('show');
-        }
+        // Removed sendEmail function as it's no longer needed
         
         function processPayment(event) {
             event.preventDefault();

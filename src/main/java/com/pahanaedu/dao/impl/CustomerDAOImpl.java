@@ -92,7 +92,7 @@ public class CustomerDAOImpl implements CustomerDAO {
     }
     
     @Override
-    public boolean deleteCustomer(int customerId) throws DatabaseException {
+    public boolean deactivateCustomer(int customerId) throws DatabaseException {
         String sql = "UPDATE customers SET is_active = false WHERE customer_id = ?";
         
         try (Connection conn = getConnection();
@@ -102,7 +102,22 @@ public class CustomerDAOImpl implements CustomerDAO {
             return pstmt.executeUpdate() > 0;
             
         } catch (SQLException e) {
-            throw new DatabaseException("Error deleting customer: " + e.getMessage(), e);
+            throw new DatabaseException("Error deactivating customer: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean activateCustomer(int customerId) throws DatabaseException {
+        String sql = "UPDATE customers SET is_active = true WHERE customer_id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, customerId);
+            return pstmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error activating customer: " + e.getMessage(), e);
         }
     }
     

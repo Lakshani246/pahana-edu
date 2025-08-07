@@ -72,7 +72,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
     
     @Override
-    public boolean deleteCustomer(int customerId) 
+    public boolean activateCustomer(int customerId) 
             throws DatabaseException, BusinessException {
         
         // Check if customer exists
@@ -81,12 +81,38 @@ public class CustomerServiceImpl implements CustomerService {
             throw new BusinessException("Customer not found");
         }
         
-        // TODO: Check if customer has pending bills before deletion
-        // This will be implemented when BillDAO is available
+        // Check if already active
+        if (customer.isActive()) {
+            throw new BusinessException("Customer is already active");
+        }
         
-        // Soft delete the customer
-        return customerDAO.deleteCustomer(customerId);
+        // Activate the customer
+        return customerDAO.activateCustomer(customerId);
     }
+
+    @Override
+    public boolean deactivateCustomer(int customerId) 
+            throws DatabaseException, BusinessException {
+        
+        // Check if customer exists
+        Customer customer = customerDAO.getCustomerById(customerId);
+        if (customer == null) {
+            throw new BusinessException("Customer not found");
+        }
+        
+        // Check if already inactive
+        if (!customer.isActive()) {
+            throw new BusinessException("Customer is already inactive");
+        }
+        
+        // TODO: Check if customer has pending bills before deactivation
+        // This will be implemented when BillDAO is available
+        // For now, we'll allow deactivation
+        
+        // Deactivate the customer
+        return customerDAO.deactivateCustomer(customerId);
+    }
+    
     
     @Override
     public Customer getCustomerById(int customerId) throws DatabaseException {

@@ -32,22 +32,9 @@
             margin-bottom: 20px;
         }
         
-        .bill-row:hover {
-            background-color: #f8f9fa;
-            cursor: pointer;
-        }
-        
         .status-badge {
             font-size: 0.875rem;
             padding: 0.25rem 0.75rem;
-        }
-        
-        .quick-actions {
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .bill-row:hover .quick-actions {
-            opacity: 1;
         }
         
         .bulk-select-info {
@@ -215,15 +202,15 @@
                                         <th>Amount</th>
                                         <th>Payment</th>
                                         <th>Status</th>
-                                        <th width="120">Actions</th>
+                                        <th width="80">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <c:choose>
                                         <c:when test="${not empty bills}">
                                             <c:forEach items="${bills}" var="bill">
-                                                <tr class="bill-row" data-bill-id="${bill.billId}">
-                                                    <td onclick="event.stopPropagation();">
+                                                <tr data-bill-id="${bill.billId}">
+                                                    <td>
                                                         <input type="checkbox" class="form-check-input bill-select" 
                                                                value="${bill.billId}">
                                                     </td>
@@ -264,20 +251,10 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <div class="btn-group btn-group-sm quick-actions" role="group">
-                                                            <a href="${pageContext.request.contextPath}/bill/view?id=${bill.billId}" 
-                                                               class="btn btn-outline-primary" title="View">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <button type="button" class="btn btn-outline-secondary" 
-                                                                    onclick="quickPrint(${bill.billId})" title="Print">
-                                                                <i class="fas fa-print"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-info" 
-                                                                    onclick="showQuickView(${bill.billId})" title="Quick View">
-                                                                <i class="fas fa-expand"></i>
-                                                            </button>
-                                                        </div>
+                                                        <a href="${pageContext.request.contextPath}/bill/view?id=${bill.billId}" 
+                                                           class="btn btn-sm btn-primary" title="View">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
@@ -331,25 +308,6 @@
             </main>
     </div>
     
-    <!-- Quick View Modal -->
-    <div class="modal fade" id="quickViewModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Bill Quick View</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="quickViewContent">
-                    <!-- Quick view content will be loaded here -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="quickViewFullBtn">View Full Details</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <jsp:include page="/includes/footer.jsp" />
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -396,14 +354,6 @@
             $('.bill-select').on('change', function() {
                 updateSelectedCount();
             });
-            
-            // Row click for navigation
-            $('.bill-row').on('click', function(e) {
-                if (!$(e.target).is('input, button, a, i')) {
-                    var billId = $(this).data('bill-id');
-                    window.location.href = '${pageContext.request.contextPath}/bill/view?id=' + billId;
-                }
-            });
         });
         
         function updateSelectedCount() {
@@ -414,43 +364,6 @@
             } else {
                 $('.bulk-select-info').hide();
             }
-        }
-        
-        function quickPrint(billId) {
-            window.open('${pageContext.request.contextPath}/bill/print?id=' + billId, '_blank');
-        }
-        
-        function showQuickView(billId) {
-            $.ajax({
-                url: '${pageContext.request.contextPath}/bill/list',
-                type: 'POST',
-                data: {
-                    action: 'ajax',
-                    ajaxAction: 'quickView',
-                    billId: billId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        var bill = response.bill;
-                        var html = '<div class="row">';
-                        html += '<div class="col-md-6">';
-                        html += '<p><strong>Bill Number:</strong> ' + bill.billNumber + '</p>';
-                        html += '<p><strong>Date:</strong> ' + response.formattedDate + ' ' + response.formattedTime + '</p>';
-                        html += '<p><strong>Customer:</strong> ' + bill.customerName + '</p>';
-                        html += '</div>';
-                        html += '<div class="col-md-6">';
-                        html += '<p><strong>Total Amount:</strong> Rs. ' + bill.totalAmount.toFixed(2) + '</p>';
-                        html += '<p><strong>Payment Method:</strong> ' + bill.paymentMethod + '</p>';
-                        html += '<p><strong>Status:</strong> <span class="badge bg-' + bill.paymentStatusClass + '">' + bill.paymentStatus + '</span></p>';
-                        html += '</div>';
-                        html += '</div>';
-                        
-                        $('#quickViewContent').html(html);
-                        $('#quickViewFullBtn').attr('onclick', 'window.location.href="${pageContext.request.contextPath}/bill/view?id=' + billId + '"');
-                        $('#quickViewModal').modal('show');
-                    }
-                }
-            });
         }
         
         function exportBills(format) {

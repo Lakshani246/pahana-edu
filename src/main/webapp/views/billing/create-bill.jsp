@@ -135,20 +135,6 @@
                                 </div>
                                 <div class="card-body">
                                     <div id="itemsContainer">
-                                        <!-- Item rows will be added here dynamically -->
-                                        <c:if test="${clonedBill != null}">
-                                            <c:forEach items="${clonedBill.billItems}" var="item" varStatus="status">
-                                                <script>
-                                                    $(document).ready(function() {
-                                                        addItemRow();
-                                                        var row = $('#itemsContainer .item-row').last();
-                                                        row.find('select[name="itemId[]"]').val(${item.itemId}).trigger('change');
-                                                        row.find('input[name="quantity[]"]').val(${item.quantity});
-                                                        row.find('input[name="itemDiscount[]"]').val(${item.discountPercentage});
-                                                    });
-                                                </script>
-                                            </c:forEach>
-                                        </c:if>
                                     </div>
                                     <div id="noItemsMessage" class="text-center text-muted py-4">
                                         <i class="fas fa-shopping-cart fa-3x mb-3"></i>
@@ -361,10 +347,8 @@
                 $(this).addClass('was-validated');
             });
             
-            // Add first item row if not cloning
-            if (!${clonedBill != null}) {
-                addItemRow();
-            }
+         // Add first item row
+            addItemRow();
         });
         
         function addItemRow() {

@@ -361,12 +361,4 @@ public interface BillingService {
     boolean sendBillByEmail(int billId, String recipientEmail) 
             throws DatabaseException, BusinessException;
     
-    /**
-     * Clone an existing bill
-     * @param billId Bill ID to clone
-     * @return Cloned bill (not saved)
-     * @throws DatabaseException if database operation fails
-     * @throws BusinessException if bill cannot be cloned
-     */
-    Bill cloneBill(int billId) throws DatabaseException, BusinessException;
 }

@@ -14,7 +14,7 @@
 <body>
     <jsp:include page="/includes/navbar.jsp" />
     
-    <div class="container-fluid">
+    <div class="container-fluid"> 
             <main class="px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Customer Details</h1>
@@ -90,17 +90,59 @@
                             </div>
                         </div>
                         
+                        <hr class="my-4">
+                        
+                        <!-- Purchase Summary Section -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5 class="mb-3">Purchase Summary</h5>
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h3 class="text-primary">${customer.purchaseCount}</h3>
+                                                <p class="mb-0">Total Purchases</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h3 class="text-success">LKR <fmt:formatNumber value="${customer.totalPurchases}" pattern="#,##0.00"/></h3>
+                                                <p class="mb-0">Total Amount</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h3 class="text-info">
+                                                    <c:choose>
+                                                        <c:when test="${customer.purchaseCount > 0}">
+                                                            LKR <fmt:formatNumber value="${customer.totalPurchases / customer.purchaseCount}" pattern="#,##0.00"/>
+                                                        </c:when>
+                                                        <c:otherwise>0.00</c:otherwise>
+                                                    </c:choose>
+                                                </h3>
+                                                <p class="mb-0">Average Purchase</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="mt-4">
                             <a href="${pageContext.request.contextPath}/customer/edit?id=${customer.customerId}" 
                                class="btn btn-primary me-2">
-                                <i class="fas fa-edit"></i> Edit
+                                <i class="fas fa-edit"></i> Edit Customer
                             </a>
                             <c:if test="${customer.active}">
                                 <form action="${pageContext.request.contextPath}/customer/delete" method="post" 
-                                      style="display:inline;" onsubmit="return confirm('Deactivate this customer?');">
+                                      style="display:inline;" onsubmit="return confirm('Are you sure you want to deactivate this customer?');">
                                     <input type="hidden" name="id" value="${customer.customerId}">
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="fas fa-user-slash"></i> Deactivate
+                                    <button type="submit" class="btn btn-danger me-2">
+                                        <i class="fas fa-user-slash"></i> Deactivate Customer
                                     </button>
                                 </form>
                             </c:if>
@@ -108,17 +150,7 @@
                     </div>
                 </div>
                 
-                <!-- Customer Purchase History (to be implemented with billing module) -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Purchase History</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            Purchase history will be displayed here once billing module is implemented.
-                        </div>
-                    </div>
-                </div>
+                
             </main>
     </div>
     
