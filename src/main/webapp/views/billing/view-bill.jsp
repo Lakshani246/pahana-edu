@@ -550,7 +550,7 @@
         
         function downloadPDF() {
             // Download as HTML (user can save as PDF from browser)
-            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}/html';
+            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}';
         }
         
         function openPrintView() {

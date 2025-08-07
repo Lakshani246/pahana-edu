@@ -197,13 +197,36 @@ public class BillingServiceImpl implements BillingService {
     public Bill getBillById(int billId) throws DatabaseException {
         Bill bill = billDAO.getBillById(billId);
         if (bill != null) {
-            // Load bill items
-            List<BillItem> items = billItemDAO.getBillItemsByBillId(billId);
+            // Load bill items with complete details
+            List<BillItem> items = billItemDAO.getBillItemsWithDetails(billId);
+            
+            // If getBillItemsWithDetails doesn't exist, use the basic method and enhance
+            if (items == null || items.isEmpty()) {
+                items = billItemDAO.getBillItemsByBillId(billId);
+                
+                // Ensure each BillItem has a complete Item object
+                for (BillItem billItem : items) {
+                    if (billItem.getItem() == null) {
+                        try {
+                            Item item = itemDAO.getItemById(billItem.getItemId());
+                            billItem.setItem(item);
+                        } catch (DatabaseException e) {
+                            // Log error but continue with other items
+                            System.err.println("Could not load item " + billItem.getItemId() + ": " + e.getMessage());
+                        }
+                    }
+                }
+            }
+            
             bill.setBillItems(items);
             
             // Load customer details
-            Customer customer = customerService.getCustomerById(bill.getCustomerId());
-            bill.setCustomer(customer);
+            try {
+                Customer customer = customerService.getCustomerById(bill.getCustomerId());
+                bill.setCustomer(customer);
+            } catch (DatabaseException e) {
+                System.err.println("Could not load customer " + bill.getCustomerId() + ": " + e.getMessage());
+            }
         }
         return bill;
     }

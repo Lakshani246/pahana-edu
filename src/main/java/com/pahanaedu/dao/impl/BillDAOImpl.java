@@ -236,7 +236,20 @@ public class BillDAOImpl implements BillDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                bills.add(extractBillFromResultSet(rs));
+                Bill bill = extractBillFromResultSet(rs);
+                
+                // Get item count with separate query
+                String countSql = "SELECT COUNT(*) FROM bill_items WHERE bill_id = ?";
+                try (PreparedStatement countStmt = conn.prepareStatement(countSql)) {
+                    countStmt.setInt(1, bill.getBillId());
+                    try (ResultSet countRs = countStmt.executeQuery()) {
+                        if (countRs.next()) {
+                            bill.setItemCount(countRs.getInt(1));
+                        }
+                    }
+                }
+                
+                bills.add(bill);
             }
             
         } catch (SQLException e) {
@@ -275,7 +288,8 @@ public class BillDAOImpl implements BillDAO {
     
     @Override
     public List<Bill> getBillsByCustomer(int customerId) throws DatabaseException {
-        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name " +
+        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name, " +
+                    "(SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.bill_id) as item_count " +
                     "FROM bills b " +
                     "LEFT JOIN customers c ON b.customer_id = c.customer_id " +
                     "LEFT JOIN users u ON b.user_id = u.user_id " +
@@ -291,7 +305,13 @@ public class BillDAOImpl implements BillDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    bills.add(extractBillFromResultSet(rs));
+                    Bill bill = extractBillFromResultSet(rs);
+                    try {
+                        bill.setItemCount(rs.getInt("item_count"));
+                    } catch (SQLException e) {
+                        bill.setItemCount(0);
+                    }
+                    bills.add(bill);
                 }
             }
             
@@ -392,7 +412,8 @@ public class BillDAOImpl implements BillDAO {
     
     @Override
     public List<Bill> getTodaysBills() throws DatabaseException {
-        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name " +
+        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name, " +
+                    "(SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.bill_id) as item_count " +
                     "FROM bills b " +
                     "LEFT JOIN customers c ON b.customer_id = c.customer_id " +
                     "LEFT JOIN users u ON b.user_id = u.user_id " +
@@ -406,7 +427,13 @@ public class BillDAOImpl implements BillDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                bills.add(extractBillFromResultSet(rs));
+                Bill bill = extractBillFromResultSet(rs);
+                try {
+                    bill.setItemCount(rs.getInt("item_count"));
+                } catch (SQLException e) {
+                    bill.setItemCount(0);
+                }
+                bills.add(bill);
             }
             
         } catch (SQLException e) {
@@ -447,7 +474,8 @@ public class BillDAOImpl implements BillDAO {
     
     @Override
     public List<Bill> searchBills(String searchTerm) throws DatabaseException {
-        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name " +
+        String sql = "SELECT b.*, c.customer_name, c.account_number, u.full_name as user_name, " +
+                    "(SELECT COUNT(*) FROM bill_items bi WHERE bi.bill_id = b.bill_id) as item_count " +
                     "FROM bills b " +
                     "LEFT JOIN customers c ON b.customer_id = c.customer_id " +
                     "LEFT JOIN users u ON b.user_id = u.user_id " +
@@ -467,7 +495,13 @@ public class BillDAOImpl implements BillDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    bills.add(extractBillFromResultSet(rs));
+                    Bill bill = extractBillFromResultSet(rs);
+                    try {
+                        bill.setItemCount(rs.getInt("item_count"));
+                    } catch (SQLException e) {
+                        bill.setItemCount(0);
+                    }
+                    bills.add(bill);
                 }
             }
             

@@ -4,6 +4,8 @@ import com.pahanaedu.dao.interfaces.BillItemDAO;
 import com.pahanaedu.model.BillItem;
 import com.pahanaedu.exception.DatabaseException;
 import com.pahanaedu.util.DBConnection;
+import com.pahanaedu.dao.interfaces.ItemDAO;
+import com.pahanaedu.model.Item;
 
 import java.sql.*;
 import java.util.*;
@@ -218,12 +220,10 @@ public class BillItemDAOImpl implements BillItemDAO {
     
     @Override
     public List<BillItem> getBillItemsByBillId(int billId) throws DatabaseException {
-        String sql = "SELECT bi.*, i.item_code, i.item_name, c.category_name " +
+        String sql = "SELECT bi.*, i.item_name, i.item_code, i.selling_price " +
                     "FROM bill_items bi " +
                     "JOIN items i ON bi.item_id = i.item_id " +
-                    "LEFT JOIN categories c ON i.category_id = c.category_id " +
-                    "WHERE bi.bill_id = ? " +
-                    "ORDER BY bi.bill_item_id";
+                    "WHERE bi.bill_id = ?";
         
         List<BillItem> items = new ArrayList<>();
         
@@ -234,12 +234,29 @@ public class BillItemDAOImpl implements BillItemDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    items.add(extractBillItemFromResultSet(rs));
+                    BillItem item = new BillItem();
+                    item.setBillItemId(rs.getInt("bill_item_id"));
+                    item.setBillId(rs.getInt("bill_id"));
+                    item.setItemId(rs.getInt("item_id"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setUnitPrice(rs.getDouble("unit_price"));
+                    item.setDiscountPercentage(rs.getDouble("discount_percentage"));
+                    item.setDiscountAmount(rs.getDouble("discount_amount"));
+                    item.setTotalPrice(rs.getDouble("total_price"));
+                    
+                    // Set item details
+                    Item itemDetails = new Item();
+                    itemDetails.setItemId(rs.getInt("item_id"));
+                    itemDetails.setItemName(rs.getString("item_name"));
+                    itemDetails.setItemCode(rs.getString("item_code"));
+                    item.setItem(itemDetails);
+                    
+                    items.add(item);
                 }
             }
             
         } catch (SQLException e) {
-            throw new DatabaseException("Error getting bill items by bill ID: " + e.getMessage(), e);
+            throw new DatabaseException("Error getting bill items: " + e.getMessage(), e);
         }
         
         return items;
@@ -777,13 +794,59 @@ public class BillItemDAOImpl implements BillItemDAO {
         item.setDiscountAmount(rs.getDouble("discount_amount"));
         item.setTotalPrice(rs.getDouble("total_price"));
         
-        // Set transient fields if available
+        // Create and set the Item object if item details are available
         try {
-            item.setItemCode(rs.getString("item_code"));
-            item.setItemName(rs.getString("item_name"));
-            item.setCategoryName(rs.getString("category_name"));
+            String itemCode = rs.getString("item_code");
+            String itemName = rs.getString("item_name");
+            
+            if (itemCode != null && itemName != null) {
+                // Create a complete Item object
+                Item itemObj = new Item();
+                itemObj.setItemId(rs.getInt("item_id"));
+                itemObj.setItemCode(itemCode);
+                itemObj.setItemName(itemName);
+                
+                // Set additional fields if available
+                try {
+                    itemObj.setSellingPrice(rs.getDouble("selling_price"));
+                } catch (SQLException e) {
+                    // selling_price column might not be present
+                    itemObj.setSellingPrice(item.getUnitPrice());
+                }
+                
+                try {
+                    itemObj.setCategoryId(rs.getInt("category_id"));
+                } catch (SQLException e) {
+                    // category_id might not be present
+                }
+                
+                // Set the item object in BillItem
+                item.setItem(itemObj);
+            }
+            
+            // Also set transient fields for backward compatibility
+            item.setItemCode(itemCode);
+            item.setItemName(itemName);
+            
+            try {
+                item.setCategoryName(rs.getString("category_name"));
+            } catch (SQLException e) {
+                // category_name might not be present
+            }
+            
         } catch (SQLException e) {
-            // Columns might not be present in all queries
+            // If item details are not available, try to load item separately
+            // This ensures we always have an Item object
+            try {
+                ItemDAO itemDAO = new ItemDAOImpl();
+                Item itemObj = itemDAO.getItemById(item.getItemId());
+                if (itemObj != null) {
+                    item.setItem(itemObj);
+                }
+            } catch (Exception ex) {
+                // Log the error but don't fail the entire operation
+                System.err.println("Could not load item details for item ID: " + item.getItemId());
+            }
         }
         
         return item;

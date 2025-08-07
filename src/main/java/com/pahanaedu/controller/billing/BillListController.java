@@ -110,6 +110,34 @@ public class BillListController extends HttpServlet {
                 SessionUtil.setWarningMessage(session, "PDF export is not yet implemented");
             }
             
+            System.out.println("===== BILL LIST DEBUG START =====");
+            System.out.println("Total bills retrieved: " + bills.size());
+            for (Bill bill : bills) {
+                System.out.println("Bill: " + bill.getBillNumber() + 
+                                 " | ItemCount: " + bill.getItemCount() + 
+                                 " | BillItems List: " + (bill.getBillItems() != null ? bill.getBillItems().size() : "null"));
+                
+                // If item count is 0, try to get more info
+                if (bill.getItemCount() == 0) {
+                    System.out.println("  -> Item count is 0 for bill " + bill.getBillNumber());
+                    // Try to load items directly
+                    try {
+                        Bill fullBill = billingService.getBillById(bill.getBillId());
+                        System.out.println("  -> After loading full bill, item count: " + fullBill.getItemCount());
+                        System.out.println("  -> Bill items list size: " + (fullBill.getBillItems() != null ? fullBill.getBillItems().size() : "null"));
+                        
+                        // Update the bill in the list
+                        bill.setItemCount(fullBill.getItemCount());
+                        if (fullBill.getBillItems() != null) {
+                            bill.setBillItems(fullBill.getBillItems());
+                        }
+                    } catch (Exception e) {
+                        System.out.println("  -> Error loading full bill: " + e.getMessage());
+                    }
+                }
+            }
+            System.out.println("===== BILL LIST DEBUG END =====");
+            
             // Calculate statistics
             Map<String, Object> statistics = calculateStatistics(bills);
             
