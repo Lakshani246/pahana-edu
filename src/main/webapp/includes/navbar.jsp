@@ -114,6 +114,14 @@
                         </ul>
                     </li>
                 <% } %>
+                
+                <!-- Help Link -->
+                <li class="nav-item">
+                    <a class="nav-link ${pageContext.request.servletPath == '/help' ? 'active' : ''}" 
+                       href="${pageContext.request.contextPath}/help">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                </li>
             </ul>
             
             <!-- Right Side Menu -->
