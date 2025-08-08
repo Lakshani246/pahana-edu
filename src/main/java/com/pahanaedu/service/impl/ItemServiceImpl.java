@@ -2,30 +2,46 @@ package com.pahanaedu.service.impl;
 
 import com.pahanaedu.dao.interfaces.ItemDAO;
 import com.pahanaedu.dao.interfaces.CategoryDAO;
+import com.pahanaedu.dao.interfaces.StockMovementDAO;
 import com.pahanaedu.dao.impl.ItemDAOImpl;
 import com.pahanaedu.dao.impl.CategoryDAOImpl;
+import com.pahanaedu.dao.impl.StockMovementDAOImpl;
 import com.pahanaedu.exception.BusinessException;
 import com.pahanaedu.exception.ValidationException;
 import com.pahanaedu.exception.DatabaseException;
 import com.pahanaedu.model.Item;
 import com.pahanaedu.model.Category;
+import com.pahanaedu.model.StockMovement;
+import com.pahanaedu.constant.MovementType;
 import com.pahanaedu.service.interfaces.ItemService;
 import com.pahanaedu.util.ValidationUtil;
+import com.pahanaedu.util.DBConnection;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Date;
 
+/**
+ * Implementation of ItemService interface
+ * Handles business logic for item and stock management
+ */
 public class ItemServiceImpl implements ItemService {
     private final ItemDAO itemDAO;
     private final CategoryDAO categoryDAO;
+    private final StockMovementDAO stockMovementDAO;
 
     public ItemServiceImpl() {
         this.itemDAO = new ItemDAOImpl();
         this.categoryDAO = new CategoryDAOImpl();
+        this.stockMovementDAO = new StockMovementDAOImpl();
     }
 
+    // ========== Existing Item Management Methods ==========
+    
     @Override
     public int addItem(Item item, int createdBy) throws ValidationException, BusinessException {
         validateItem(item);
@@ -87,15 +103,31 @@ public class ItemServiceImpl implements ItemService {
             // Check if item exists
             Item item = itemDAO.getItemById(itemId);
             if (item == null) {
-                throw new BusinessException("Item not found");
+                throw new BusinessException("Item not found with ID: " + itemId);
             }
             
-            // Check if item has stock
+            // Check if already inactive
+            if (!item.isActive()) {
+                throw new BusinessException("Item is already inactive");
+            }
+            
+            // Warning about stock (not blocking by default)
             if (item.getQuantityInStock() > 0) {
-                throw new BusinessException("Cannot deactivate item with existing stock. Current stock: " + item.getQuantityInStock());
+                // Log warning but allow deactivation
+                // You could make this configurable or add a force parameter
+                System.out.println("Warning: Deactivating item with stock: " + item.getItemCode());
             }
             
-            return itemDAO.deactivateItem(itemId);
+            // Deactivate the item
+            boolean success = itemDAO.deactivateItem(itemId);
+            
+            if (success) {
+                // Log the deactivation (optional)
+                // auditLogger.log("Item deactivated", itemId, userId);
+            }
+            
+            return success;
+            
         } catch (DatabaseException e) {
             throw new BusinessException("Error deactivating item: " + e.getMessage(), e);
         }
@@ -121,7 +153,6 @@ public class ItemServiceImpl implements ItemService {
     
     @Override
     public List<Item> getActiveItems() throws BusinessException {
-        // This is just an alias for getAllActiveItems()
         return getAllActiveItems();
     }
 
@@ -224,6 +255,200 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
+    // ========== NEW: Stock Movement Methods Implementation ==========
+    
+    @Override
+    public boolean adjustStockWithMovement(int itemId, MovementType movementType, 
+                                          int quantity, String reason, int userId) 
+                                          throws BusinessException {
+        
+        // Validate inputs
+        if (quantity <= 0) {
+            throw new BusinessException("Quantity must be positive");
+        }
+        
+        if (movementType == null) {
+            throw new BusinessException("Movement type is required");
+        }
+        
+        if (ValidationUtil.isNullOrEmpty(reason)) {
+            throw new BusinessException("Reason is required for stock adjustment");
+        }
+        
+        Connection conn = null;
+        
+        try {
+            // Get database connection
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // Start transaction
+            
+            // Get current item
+            Item item = itemDAO.getItemById(itemId);
+            if (item == null) {
+                throw new BusinessException("Item not found");
+            }
+            
+            // Calculate new quantity based on movement type
+            int newQuantity = item.getQuantityInStock();
+            int movementQuantity = quantity; // Quantity to record in movement
+            
+            switch (movementType) {
+                case IN:
+                case RETURN:
+                case INITIAL:
+                    // Stock increase movements
+                    newQuantity += quantity;
+                    break;
+                    
+                case OUT:
+                case DAMAGE:
+                    // Stock decrease movements
+                    if (item.getQuantityInStock() < quantity) {
+                        throw new BusinessException(
+                            String.format("Insufficient stock. Available: %d, Requested: %d", 
+                                        item.getQuantityInStock(), quantity));
+                    }
+                    newQuantity -= quantity;
+                    break;
+                    
+                case ADJUSTMENT:
+                    // For adjustment, quantity is the new absolute value
+                    movementQuantity = quantity - item.getQuantityInStock();
+                    newQuantity = quantity;
+                    break;
+                    
+                case TRANSFER:
+                    // Transfer logic would go here if needed
+                    throw new BusinessException("Transfer movement type not yet implemented");
+                    
+                default:
+                    throw new BusinessException("Unknown movement type: " + movementType);
+            }
+            
+            // Validate new quantity
+            if (newQuantity < 0) {
+                throw new BusinessException("Stock cannot be negative");
+            }
+            
+            // Create stock movement record
+            StockMovement movement = new StockMovement();
+            movement.setItemId(itemId);
+            movement.setMovementType(movementType);
+            movement.setQuantity(movementQuantity);
+            movement.setReason(reason);
+            movement.setUserId(userId);
+            movement.setReferenceType("MANUAL");
+            movement.setReferenceId(0);
+            
+            // Save movement record
+            int movementId = stockMovementDAO.addStockMovement(movement);
+            
+            if (movementId <= 0) {
+                throw new BusinessException("Failed to create stock movement record");
+            }
+            
+            // Update item stock
+            boolean stockUpdated = itemDAO.updateItemStock(itemId, newQuantity);
+            
+            if (!stockUpdated) {
+                throw new BusinessException("Failed to update item stock");
+            }
+            
+            // Commit transaction
+            conn.commit();
+            return true;
+            
+        } catch (DatabaseException e) {
+            // Rollback transaction on database error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    // Log rollback error
+                }
+            }
+            throw new BusinessException("Database error during stock adjustment: " + e.getMessage(), e);
+            
+        } catch (SQLException e) {
+            // Rollback transaction on SQL error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    // Log rollback error
+                }
+            }
+            throw new BusinessException("Connection error during stock adjustment: " + e.getMessage(), e);
+            
+        } catch (BusinessException e) {
+            // Rollback transaction on business error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    // Log rollback error
+                }
+            }
+            throw e; // Re-throw business exception
+            
+        } finally {
+            // Reset auto-commit
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    // Log error
+                }
+            }
+        }
+    }
+    
+    @Override
+    public List<StockMovement> getStockHistory(int itemId) throws BusinessException {
+        try {
+            return stockMovementDAO.getMovementsByItemId(itemId);
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving stock history: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<StockMovement> getRecentStockMovements(int limit) throws BusinessException {
+        if (limit <= 0) {
+            limit = 10; // Default to 10 recent movements
+        }
+        
+        try {
+            return stockMovementDAO.getRecentMovements(limit);
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving recent stock movements: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<StockMovement> getStockMovementsByDateRange(int itemId, Date startDate, Date endDate) 
+                                                           throws BusinessException {
+        if (startDate == null || endDate == null) {
+            throw new BusinessException("Start date and end date are required");
+        }
+        
+        if (startDate.after(endDate)) {
+            throw new BusinessException("Start date must be before end date");
+        }
+        
+        try {
+            if (itemId > 0) {
+                // Get movements for specific item
+                return stockMovementDAO.getAuditTrail(itemId, startDate, endDate);
+            } else {
+                // Get movements for all items
+                return stockMovementDAO.getMovementsByDateRange(startDate, endDate);
+            }
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving stock movements by date: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     public List<Item> getOutOfStockItems() throws BusinessException {
         try {
@@ -265,7 +490,90 @@ public class ItemServiceImpl implements ItemService {
             throw new BusinessException("Error calculating inventory value: " + e.getMessage(), e);
         }
     }
+    
+    
+    @Override
+    public boolean activateItem(int itemId) throws BusinessException {
+        try {
+            // Check if item exists
+            Item item = itemDAO.getItemById(itemId);
+            if (item == null) {
+                throw new BusinessException("Item not found with ID: " + itemId);
+            }
+            
+            // Check if already active
+            if (item.isActive()) {
+                throw new BusinessException("Item is already active");
+            }
+            
+            // Activate the item
+            boolean success = itemDAO.activateItem(itemId);
+            
+            if (success) {
+                // Log the activation (optional - if you have audit logging)
+                // auditLogger.log("Item activated", itemId, userId);
+            }
+            
+            return success;
+            
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error activating item: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<Item> getAllItems(boolean includeInactive) throws BusinessException {
+        try {
+            if (includeInactive) {
+                return itemDAO.getAllItems(); // Returns both active and inactive
+            } else {
+                return itemDAO.getAllActiveItems(); // Returns only active items
+            }
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving items: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public List<Item> getInactiveItems() throws BusinessException {
+        try {
+            return itemDAO.getInactiveItems();
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error retrieving inactive items: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public boolean canDeactivateItem(int itemId) throws BusinessException {
+        try {
+            Item item = itemDAO.getItemById(itemId);
+            if (item == null) {
+                throw new BusinessException("Item not found");
+            }
+            
+            // Check various conditions
+            if (!item.isActive()) {
+                throw new BusinessException("Item is already inactive");
+            }
+            
+            // You can add more business rules here
+            // For example: check if item is in any pending orders
+            
+            // Warning (not blocking) if item has stock
+            if (item.getQuantityInStock() > 0) {
+                // This is just a warning, not a blocker
+                // The controller can use force=true to override
+                return true; // Can deactivate, but with warning
+            }
+            
+            return true;
+            
+        } catch (DatabaseException e) {
+            throw new BusinessException("Error checking deactivation eligibility: " + e.getMessage(), e);
+        }
+    }
 
+    // Private validation method
     private void validateItem(Item item) throws ValidationException {
         Map<String, List<String>> errors = new HashMap<>();
         

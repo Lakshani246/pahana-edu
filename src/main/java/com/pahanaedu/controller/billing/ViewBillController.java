@@ -149,15 +149,7 @@ public class ViewBillController extends HttpServlet {
                 case "updateNote":
                     handleUpdateNote(request, jsonResponse);
                     break;
-                    
-                case "resendEmail":
-                    handleResendEmail(request, jsonResponse);
-                    break;
-                    
-                case "generateReceipt":
-                    handleGenerateReceipt(request, jsonResponse);
-                    break;
-                    
+
                 default:
                     jsonResponse.addProperty("success", false);
                     jsonResponse.addProperty("error", "Unknown action: " + ajaxAction);
@@ -206,10 +198,6 @@ public class ViewBillController extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/bill/print?id=" + billId);
                     break;
                     
-                case "email":
-                    handleEmailBill(request, response, billId);
-                    break;
-                    
                 default:
                     SessionUtil.setErrorMessage(session, "Unknown action: " + billAction);
                     response.sendRedirect(request.getContextPath() + "/bill/view?id=" + billId);
@@ -248,35 +236,6 @@ public class ViewBillController extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/bill/view?id=" + billId);
     }
     
-    /**
-     * Handle email bill action
-     */
-    private void handleEmailBill(HttpServletRequest request, HttpServletResponse response, 
-                                int billId) throws Exception {
-        
-        HttpSession session = request.getSession();
-        String recipientEmail = request.getParameter("recipientEmail");
-        
-        if (ValidationUtil.isNullOrEmpty(recipientEmail) || !ValidationUtil.isValidEmail(recipientEmail)) {
-            SessionUtil.setErrorMessage(session, "Valid email address is required");
-            response.sendRedirect(request.getContextPath() + "/bill/view?id=" + billId);
-            return;
-        }
-        
-        try {
-            boolean success = billingService.sendBillByEmail(billId, recipientEmail);
-            
-            if (success) {
-                SessionUtil.setSuccessMessage(session, "Bill sent successfully to " + recipientEmail);
-            } else {
-                SessionUtil.setErrorMessage(session, "Failed to send bill");
-            }
-        } catch (Exception e) {
-            SessionUtil.setWarningMessage(session, "Email functionality not yet implemented");
-        }
-        
-        response.sendRedirect(request.getContextPath() + "/bill/view?id=" + billId);
-    }
     
     /**
      * Handle process payment AJAX request
@@ -326,40 +285,6 @@ public class ViewBillController extends HttpServlet {
         }
     }
     
-    /**
-     * Handle resend email AJAX request
-     */
-    private void handleResendEmail(HttpServletRequest request, JsonObject response) 
-            throws Exception {
-        
-        int billId = Integer.parseInt(request.getParameter("billId"));
-        String email = request.getParameter("email");
-        
-        try {
-            boolean success = billingService.sendBillByEmail(billId, email);
-            response.addProperty("success", success);
-            response.addProperty("message", success ? "Email sent successfully" : "Failed to send email");
-        } catch (Exception e) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Email functionality not yet implemented");
-        }
-    }
-    
-    /**
-     * Handle generate receipt AJAX request
-     */
-    private void handleGenerateReceipt(HttpServletRequest request, JsonObject response) 
-            throws Exception {
-        
-        int billId = Integer.parseInt(request.getParameter("billId"));
-        
-        // Generate receipt URL
-        String receiptUrl = request.getContextPath() + "/bill/print?id=" + billId + "&format=receipt";
-        
-        response.addProperty("success", true);
-        response.addProperty("receiptUrl", receiptUrl);
-        response.addProperty("message", "Receipt generated successfully");
-    }
     
     /**
      * Check if user has permission to view bill
@@ -392,7 +317,6 @@ public class ViewBillController extends HttpServlet {
         boolean canCancel = false;
         boolean canProcessPayment = false;
         boolean canPrint = true;
-        boolean canEmail = true;
         
         try {
             if (currentUser.isAdmin()) {
@@ -427,7 +351,6 @@ public class ViewBillController extends HttpServlet {
         request.setAttribute("canCancel", canCancel);
         request.setAttribute("canProcessPayment", canProcessPayment);
         request.setAttribute("canPrint", canPrint);
-        request.setAttribute("canEmail", canEmail);
     }
     
     @Override

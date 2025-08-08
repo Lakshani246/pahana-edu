@@ -126,6 +126,28 @@ public interface ItemDAO {
     boolean isISBNExists(String isbn) throws DatabaseException;
     
     /**
+     * Activate an item (set is_active = true)
+     * @param itemId Item ID to activate
+     * @return true if activation successful
+     * @throws DatabaseException if database operation fails
+     */
+    boolean activateItem(int itemId) throws DatabaseException;
+    
+    /**
+     * Get all items (both active and inactive)
+     * @return List of all items
+     * @throws DatabaseException if database operation fails
+     */
+    List<Item> getAllItems() throws DatabaseException;
+    
+    /**
+     * Get inactive items only
+     * @return List of inactive items
+     * @throws DatabaseException if database operation fails
+     */
+    List<Item> getInactiveItems() throws DatabaseException;
+    
+    /**
      * Generate next item code
      * @return Generated item code
      * @throws DatabaseException if database operation fails

@@ -6,6 +6,27 @@
     User currentUser = SessionUtil.getLoggedInUser(session);
 %>
 
+<style>
+    .navbar-nav .dropdown-menu-end {
+        right: 0;
+        left: auto;
+    }
+    
+    .navbar-nav .nav-link .badge {
+        font-size: 0.75rem;
+        vertical-align: middle;
+    }
+    
+    .dropdown-item-text {
+        padding: 0.5rem 1rem;
+        display: block;
+    }
+    
+    .dropdown-item.text-danger:hover {
+        background-color: #f8d7da;
+    }
+</style>
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <div class="container-fluid">
         <!-- Brand -->
@@ -84,8 +105,8 @@
                             <i class="fas fa-chart-bar"></i> Reports
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="reportDropdown">
-                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/daily">
-                                <i class="fas fa-calendar-day"></i> Daily Sales</a></li>
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/sales">
+                                <i class="fas fa-calendar-day"></i> Sales Report</a></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/stock">
                                 <i class="fas fa-boxes"></i> Stock Report</a></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/report/customer">
@@ -97,33 +118,33 @@
             
             <!-- Right Side Menu -->
             <ul class="navbar-nav ms-auto">
-                <!-- Help -->
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/help">
-                        <i class="fas fa-question-circle"></i> Help
-                    </a>
-                </li>
                 
                 <!-- User Menu -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle"></i> <%= currentUser != null ? currentUser.getFullName() : "User" %>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><h6 class="dropdown-header">
-                            <%= currentUser != null ? currentUser.getRole() : "" %>
-                        </h6></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/profile">
-                            <i class="fas fa-user"></i> My Profile</a></li>
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/change-password">
-                            <i class="fas fa-key"></i> Change Password</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="${pageContext.request.contextPath}/logout">
-                            <i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                    </ul>
-                </li>
+				<li class="nav-item dropdown">
+				    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+				       data-bs-toggle="dropdown" aria-expanded="false">
+				        <i class="fas fa-user-circle"></i> 
+				        <%= currentUser != null ? currentUser.getFullName() : "User" %>
+				        <% if (currentUser != null) { %>
+				            <span class="badge bg-secondary ms-1"><%= currentUser.getRole() %></span>
+				        <% } %>
+				    </a>
+				    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+				        <li>
+				            <span class="dropdown-item-text">
+				                <strong><%= currentUser != null ? currentUser.getFullName() : "User" %></strong>
+				                <br>
+				                <small class="text-muted"><%= currentUser != null ? currentUser.getRole() : "" %></small>
+				            </span>
+				        </li>
+				        <li><hr class="dropdown-divider"></li>
+				        <li>
+				            <a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout">
+				                <i class="fas fa-sign-out-alt"></i> Logout
+				            </a>
+				        </li>
+				    </ul>
+				</li>
             </ul>
         </div>
     </div>

@@ -4,9 +4,11 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
- * DTO for dashboard statistics and summary data
+ * Simplified DTO for dashboard statistics
+ * Focuses only on essential summary data
  */
 public class DashboardDTO implements Serializable {
     
@@ -15,13 +17,11 @@ public class DashboardDTO implements Serializable {
     // User statistics
     private int totalUsers;
     private int activeUsers;
-    private int onlineUsers;
     
     // Customer statistics
     private int totalCustomers;
     private int activeCustomers;
     private int newCustomersToday;
-    private int newCustomersThisMonth;
     
     // Item/Inventory statistics
     private int totalItems;
@@ -32,34 +32,33 @@ public class DashboardDTO implements Serializable {
     // Sales statistics
     private int todaysBills;
     private double todaysSales;
-    private int weeklyBills;
-    private double weeklySales;
     private int monthlyBills;
     private double monthlySales;
     private double averageBillValue;
     
-    // Recent activities
+    // Legacy fields - kept for backward compatibility but set to empty
+    // These can be fully removed once you're sure no JSP references them
     private List<Map<String, Object>> recentBills;
     private List<Map<String, Object>> recentCustomers;
-    private List<Map<String, Object>> lowStockAlerts;
-    
-    // Chart data for dashboard graphs
     private List<String> salesChartLabels;
     private List<Double> salesChartData;
-    private List<String> categoryChartLabels;
-    private List<Double> categoryChartData;
+    private List<Map<String, Object>> lowStockAlerts;
     
-    // Performance metrics
-    private double salesGrowthPercentage;
-    private double customerGrowthPercentage;
+    // Metadata
     private Date lastUpdated;
     
     // Constructor
     public DashboardDTO() {
         this.lastUpdated = new Date();
+        // Initialize lists to empty to avoid null pointer exceptions
+        this.recentBills = new ArrayList<>();
+        this.recentCustomers = new ArrayList<>();
+        this.salesChartLabels = new ArrayList<>();
+        this.salesChartData = new ArrayList<>();
+        this.lowStockAlerts = new ArrayList<>();
     }
     
-    // Getters and Setters
+    // Essential Getters and Setters
     public int getTotalUsers() {
         return totalUsers;
     }
@@ -74,14 +73,6 @@ public class DashboardDTO implements Serializable {
     
     public void setActiveUsers(int activeUsers) {
         this.activeUsers = activeUsers;
-    }
-    
-    public int getOnlineUsers() {
-        return onlineUsers;
-    }
-    
-    public void setOnlineUsers(int onlineUsers) {
-        this.onlineUsers = onlineUsers;
     }
     
     public int getTotalCustomers() {
@@ -106,14 +97,6 @@ public class DashboardDTO implements Serializable {
     
     public void setNewCustomersToday(int newCustomersToday) {
         this.newCustomersToday = newCustomersToday;
-    }
-    
-    public int getNewCustomersThisMonth() {
-        return newCustomersThisMonth;
-    }
-    
-    public void setNewCustomersThisMonth(int newCustomersThisMonth) {
-        this.newCustomersThisMonth = newCustomersThisMonth;
     }
     
     public int getTotalItems() {
@@ -164,22 +147,6 @@ public class DashboardDTO implements Serializable {
         this.todaysSales = todaysSales;
     }
     
-    public int getWeeklyBills() {
-        return weeklyBills;
-    }
-    
-    public void setWeeklyBills(int weeklyBills) {
-        this.weeklyBills = weeklyBills;
-    }
-    
-    public double getWeeklySales() {
-        return weeklySales;
-    }
-    
-    public void setWeeklySales(double weeklySales) {
-        this.weeklySales = weeklySales;
-    }
-    
     public int getMonthlyBills() {
         return monthlyBills;
     }
@@ -204,78 +171,6 @@ public class DashboardDTO implements Serializable {
         this.averageBillValue = averageBillValue;
     }
     
-    public List<Map<String, Object>> getRecentBills() {
-        return recentBills;
-    }
-    
-    public void setRecentBills(List<Map<String, Object>> recentBills) {
-        this.recentBills = recentBills;
-    }
-    
-    public List<Map<String, Object>> getRecentCustomers() {
-        return recentCustomers;
-    }
-    
-    public void setRecentCustomers(List<Map<String, Object>> recentCustomers) {
-        this.recentCustomers = recentCustomers;
-    }
-    
-    public List<Map<String, Object>> getLowStockAlerts() {
-        return lowStockAlerts;
-    }
-    
-    public void setLowStockAlerts(List<Map<String, Object>> lowStockAlerts) {
-        this.lowStockAlerts = lowStockAlerts;
-    }
-    
-    public List<String> getSalesChartLabels() {
-        return salesChartLabels;
-    }
-    
-    public void setSalesChartLabels(List<String> salesChartLabels) {
-        this.salesChartLabels = salesChartLabels;
-    }
-    
-    public List<Double> getSalesChartData() {
-        return salesChartData;
-    }
-    
-    public void setSalesChartData(List<Double> salesChartData) {
-        this.salesChartData = salesChartData;
-    }
-    
-    public List<String> getCategoryChartLabels() {
-        return categoryChartLabels;
-    }
-    
-    public void setCategoryChartLabels(List<String> categoryChartLabels) {
-        this.categoryChartLabels = categoryChartLabels;
-    }
-    
-    public List<Double> getCategoryChartData() {
-        return categoryChartData;
-    }
-    
-    public void setCategoryChartData(List<Double> categoryChartData) {
-        this.categoryChartData = categoryChartData;
-    }
-    
-    public double getSalesGrowthPercentage() {
-        return salesGrowthPercentage;
-    }
-    
-    public void setSalesGrowthPercentage(double salesGrowthPercentage) {
-        this.salesGrowthPercentage = salesGrowthPercentage;
-    }
-    
-    public double getCustomerGrowthPercentage() {
-        return customerGrowthPercentage;
-    }
-    
-    public void setCustomerGrowthPercentage(double customerGrowthPercentage) {
-        this.customerGrowthPercentage = customerGrowthPercentage;
-    }
-    
     public Date getLastUpdated() {
         return lastUpdated;
     }
@@ -284,9 +179,55 @@ public class DashboardDTO implements Serializable {
         this.lastUpdated = lastUpdated;
     }
     
+    // Legacy getters/setters - Keep for backward compatibility
+    // Remove these once you're sure no JSP pages reference them
+    public List<Map<String, Object>> getRecentBills() {
+        return recentBills != null ? recentBills : new ArrayList<>();
+    }
+    
+    public void setRecentBills(List<Map<String, Object>> recentBills) {
+        this.recentBills = recentBills;
+    }
+    
+    public List<Map<String, Object>> getRecentCustomers() {
+        return recentCustomers != null ? recentCustomers : new ArrayList<>();
+    }
+    
+    public void setRecentCustomers(List<Map<String, Object>> recentCustomers) {
+        this.recentCustomers = recentCustomers;
+    }
+    
+    public List<String> getSalesChartLabels() {
+        return salesChartLabels != null ? salesChartLabels : new ArrayList<>();
+    }
+    
+    public void setSalesChartLabels(List<String> salesChartLabels) {
+        this.salesChartLabels = salesChartLabels;
+    }
+    
+    public List<Double> getSalesChartData() {
+        return salesChartData != null ? salesChartData : new ArrayList<>();
+    }
+    
+    public void setSalesChartData(List<Double> salesChartData) {
+        this.salesChartData = salesChartData;
+    }
+    
+    public List<Map<String, Object>> getLowStockAlerts() {
+        return lowStockAlerts != null ? lowStockAlerts : new ArrayList<>();
+    }
+    
+    public void setLowStockAlerts(List<Map<String, Object>> lowStockAlerts) {
+        this.lowStockAlerts = lowStockAlerts;
+    }
+    
     // Utility methods
     public boolean hasLowStockAlerts() {
         return lowStockItems > 0 || outOfStockItems > 0;
+    }
+    
+    public boolean hasCriticalAlerts() {
+        return outOfStockItems > 0;
     }
     
     public String getStockStatus() {
@@ -305,12 +246,5 @@ public class DashboardDTO implements Serializable {
             return "warning";
         }
         return "success";
-    }
-    
-    public double calculateDailyAverage() {
-        if (todaysBills > 0) {
-            return todaysSales / todaysBills;
-        }
-        return 0.0;
     }
 }

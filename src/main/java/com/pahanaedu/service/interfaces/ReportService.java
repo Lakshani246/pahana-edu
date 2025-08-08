@@ -15,15 +15,7 @@ import java.util.Map;
 public interface ReportService {
     
     /**
-     * Generate daily sales report
-     * @param reportDate Date for the report (null for today)
-     * @return ReportDTO with daily sales data
-     * @throws DatabaseException if database operation fails
-     */
-    ReportDTO generateDailySalesReport(Date reportDate) throws DatabaseException;
-    
-    /**
-     * Generate sales report for date range
+     * Generate sales report for any date range (daily, monthly, or custom)
      * @param startDate Start date
      * @param endDate End date
      * @return ReportDTO with sales data
@@ -66,42 +58,24 @@ public interface ReportService {
     DashboardDTO generateDashboardStatistics() throws DatabaseException;
     
     /**
-     * Get sales by category for a period
+     * Get sales breakdown by payment method
      * @param startDate Start date
      * @param endDate End date
-     * @return List of category sales data
+     * @return Map with payment method breakdown
      * @throws DatabaseException if database operation fails
      */
-    List<Map<String, Object>> getSalesByCategory(Date startDate, Date endDate) 
+    Map<String, Double> getSalesBreakdownByPaymentMethod(Date startDate, Date endDate) 
             throws DatabaseException;
     
     /**
-     * Get top selling items for a period
+     * Get daily sales breakdown for a date range
      * @param startDate Start date
      * @param endDate End date
-     * @param limit Number of items to return
-     * @return List of top selling items
+     * @return List of daily sales data
      * @throws DatabaseException if database operation fails
      */
-    List<Map<String, Object>> getTopSellingItems(Date startDate, Date endDate, int limit) 
+    List<Map<String, Object>> getDailySalesBreakdown(Date startDate, Date endDate) 
             throws DatabaseException;
-    
-    /**
-     * Get sales trend for last N days
-     * @param days Number of days
-     * @return Map with date labels and sales data
-     * @throws DatabaseException if database operation fails
-     */
-    Map<String, List<?>> getSalesTrend(int days) throws DatabaseException;
-    
-    /**
-     * Get monthly sales summary
-     * @param year Year
-     * @param month Month (1-12)
-     * @return ReportDTO with monthly summary
-     * @throws DatabaseException if database operation fails
-     */
-    ReportDTO getMonthlySummary(int year, int month) throws DatabaseException;
     
     /**
      * Export report to CSV
@@ -109,12 +83,6 @@ public interface ReportService {
      * @return CSV string
      */
     String exportReportToCSV(ReportDTO report);
-    
-    /**
-     * Get report types available
-     * @return List of report types
-     */
-    List<String> getAvailableReportTypes();
     
     /**
      * Validate date range for reports

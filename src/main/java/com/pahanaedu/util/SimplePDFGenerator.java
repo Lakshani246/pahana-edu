@@ -278,56 +278,6 @@ public class SimplePDFGenerator {
         return html.toString();
     }
     
-    /**
-     * Generate a simple text-based bill (for email or basic printing)
-     */
-    public static String generateBillText(Bill bill, String companyName) {
-        StringBuilder text = new StringBuilder();
-        String line = "=".repeat(60);
-        
-        text.append(line).append("\n");
-        text.append(centerText(companyName, 60)).append("\n");
-        text.append(centerText("INVOICE", 60)).append("\n");
-        text.append(line).append("\n\n");
-        
-        text.append("Bill No: ").append(bill.getBillNumber()).append("\n");
-        text.append("Date: ").append(DATE_FORMAT.format(bill.getBillDate())).append("\n");
-        text.append("Time: ").append(TIME_FORMAT.format(bill.getBillTime())).append("\n\n");
-        
-        text.append("BILL TO:\n");
-        text.append(bill.getCustomer().getCustomerName()).append("\n");
-        text.append(bill.getCustomer().getAddress()).append("\n");
-        text.append("Tel: ").append(bill.getCustomer().getTelephone()).append("\n\n");
-        
-        text.append(line).append("\n");
-        text.append(String.format("%-20s %-5s %-10s %10s\n", "ITEM", "QTY", "PRICE", "TOTAL"));
-        text.append(line).append("\n");
-        
-        for (BillItem item : bill.getBillItems()) {
-            text.append(String.format("%-20s %5d %10s %10s\n",
-                truncate(getItemName(item), 20),
-                item.getQuantity(),
-                DECIMAL_FORMAT.format(item.getUnitPrice()),
-                DECIMAL_FORMAT.format(item.getTotalPrice())
-            ));
-        }
-        
-        text.append(line).append("\n");
-        text.append(String.format("%36s %10s\n", "Subtotal:", DECIMAL_FORMAT.format(bill.getSubtotal())));
-        if (bill.getDiscountAmount() > 0) {
-            text.append(String.format("%36s -%9s\n", "Discount:", DECIMAL_FORMAT.format(bill.getDiscountAmount())));
-        }
-        if (bill.getTaxAmount() > 0) {
-            text.append(String.format("%36s +%9s\n", "Tax:", DECIMAL_FORMAT.format(bill.getTaxAmount())));
-        }
-        text.append(line).append("\n");
-        text.append(String.format("%36s %10s\n", "TOTAL:", "LKR " + DECIMAL_FORMAT.format(bill.getTotalAmount())));
-        text.append(line).append("\n\n");
-        
-        text.append(centerText("Thank you for your business!", 60)).append("\n");
-        
-        return text.toString();
-    }
     
     /**
      * Safely get item code from BillItem

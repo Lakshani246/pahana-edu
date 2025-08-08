@@ -95,7 +95,7 @@ public class EditItemController extends HttpServlet {
             
             if (success) {
                 SessionUtil.setSuccessMessage(session, "Item updated successfully!");
-                response.sendRedirect(request.getContextPath() + "/items");
+                response.sendRedirect(request.getContextPath() + "/item/list");
             } else {
                 throw new BusinessException("Failed to update item");
             }

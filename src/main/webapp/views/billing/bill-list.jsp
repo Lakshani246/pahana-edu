@@ -37,12 +37,6 @@
             padding: 0.25rem 0.75rem;
         }
         
-        .bulk-select-info {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -170,20 +164,6 @@
                     </form>
                 </div>
                 
-                <!-- Bulk Action Bar -->
-                <div class="bulk-select-info mb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span><span id="selectedCount">0</span> bills selected</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkCancel()">
-                                <i class="fas fa-times"></i> Cancel Selected
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="bulkExport()">
-                                <i class="fas fa-download"></i> Export Selected
-                            </button>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Bills Table -->
                 <div class="card">
@@ -192,9 +172,7 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th width="30">
-                                            <input type="checkbox" class="form-check-input" id="selectAll">
-                                        </th>
+                                        
                                         <th>Bill No.</th>
                                         <th>Date</th>
                                         <th>Customer</th>
@@ -210,10 +188,7 @@
                                         <c:when test="${not empty bills}">
                                             <c:forEach items="${bills}" var="bill">
                                                 <tr data-bill-id="${bill.billId}">
-                                                    <td>
-                                                        <input type="checkbox" class="form-check-input bill-select" 
-                                                               value="${bill.billId}">
-                                                    </td>
+                                                    
                                                     <td>
                                                         <a href="${pageContext.request.contextPath}/bill/view?id=${bill.billId}" 
                                                            class="text-decoration-none">
@@ -373,45 +348,6 @@
             window.location.href = '${pageContext.request.contextPath}/bill/list' + params;
         }
         
-        function bulkCancel() {
-            var selectedBills = [];
-            $('.bill-select:checked').each(function() {
-                selectedBills.push($(this).val());
-            });
-            
-            if (selectedBills.length === 0) {
-                alert('Please select bills to cancel');
-                return;
-            }
-            
-            if (confirm('Are you sure you want to cancel ' + selectedBills.length + ' bill(s)?')) {
-                $('<form>', {
-                    method: 'POST',
-                    action: '${pageContext.request.contextPath}/bill/list'
-                }).append(
-                    $('<input>', {type: 'hidden', name: 'bulkAction', value: 'cancel'})
-                ).append(
-                    selectedBills.map(function(id) {
-                        return $('<input>', {type: 'hidden', name: 'billIds[]', value: id});
-                    })
-                ).appendTo('body').submit();
-            }
-        }
-        
-        function bulkExport() {
-            var selectedBills = [];
-            $('.bill-select:checked').each(function() {
-                selectedBills.push($(this).val());
-            });
-            
-            if (selectedBills.length === 0) {
-                alert('Please select bills to export');
-                return;
-            }
-            
-            // Implement bulk export logic
-            alert('Export functionality for selected bills will be implemented');
-        }
     </script>
 </body>
 </html>

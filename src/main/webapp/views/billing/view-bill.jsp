@@ -119,16 +119,7 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom no-print">
                     <h1 class="h2">Bill Details</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-primary" onclick="openPrintView()">
-                                <i class="fas fa-print"></i> Print
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="downloadPDF()">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </button>
-                            <!-- Email button removed -->
-                        </div>
-                        <a href="${pageContext.request.contextPath}/bill/list" class="btn btn-outline-secondary">
+                        <a href="${pageContext.request.contextPath}/bill/list" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back
                         </a>
                     </div>
@@ -382,24 +373,24 @@
                         </div>
                         
                         <!-- Quick Actions -->
-                        <div class="card mb-4 no-print">
-                            <div class="card-header">
-                                <h5 class="mb-0">Quick Actions</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary" onclick="openPrintView()">
-                                        <i class="fas fa-print"></i> Print Bill
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary" onclick="generateReceipt()">
-                                        <i class="fas fa-receipt"></i> Generate Receipt
-                                    </button>
-                                    <button type="button" class="btn btn-outline-info" onclick="viewCustomer()">
-                                        <i class="fas fa-user"></i> View Customer
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+						<div class="card mb-4 no-print">
+						    <div class="card-header">
+						        <h5 class="mb-0">Quick Actions</h5>
+						    </div>
+						    <div class="card-body">
+						        <div class="d-grid gap-2">
+						            <button type="button" class="btn btn-outline-primary" onclick="openPrintView()">
+						                <i class="fas fa-print"></i> Print Bill
+						            </button>
+						            <button type="button" class="btn btn-outline-danger" onclick="downloadPDF()">
+						                <i class="fas fa-file-pdf"></i> Download PDF
+						            </button>
+						            <button type="button" class="btn btn-outline-info" onclick="viewCustomer()">
+						                <i class="fas fa-user"></i> View Customer
+						            </button>
+						        </div>
+						    </div>
+						</div>
                     </div>
                 </div>
             </main>
@@ -510,7 +501,6 @@
             $('#cancelModal').modal('show');
         }
         
-        // Removed sendEmail function as it's no longer needed
         
         function processPayment(event) {
             event.preventDefault();
@@ -539,18 +529,14 @@
             });
         }
         
-        function generateReceipt() {
-            // Download as text receipt
-            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}/text';
-        }
         
         function viewCustomer() {
             window.location.href = '${pageContext.request.contextPath}/customer/view?id=${bill.customerId}';
         }
         
         function downloadPDF() {
-            // Download as HTML (user can save as PDF from browser)
-            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}';
+            // Direct PDF download (not HTML)
+            window.location.href = '${pageContext.request.contextPath}/bill/download/${bill.billId}/pdf';
         }
         
         function openPrintView() {

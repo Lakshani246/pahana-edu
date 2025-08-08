@@ -7,14 +7,12 @@
         <div class="row">
             <div class="col-md-6">
                 <span class="text-muted">
-                    &copy; 2024 Pahana Edu Bookshop. All rights reserved.
+                    &copy; 2025 Pahana Edu Bookshop. All rights reserved.
                 </span>
             </div>
             <div class="col-md-6 text-md-end">
                 <span class="text-muted">
-                    Version 1.0.0 | 
-                    <a href="${pageContext.request.contextPath}/help" class="text-decoration-none">Help</a> | 
-                    <a href="${pageContext.request.contextPath}/about" class="text-decoration-none">About</a>
+                    Version 1.0.0 
                 </span>
             </div>
         </div>

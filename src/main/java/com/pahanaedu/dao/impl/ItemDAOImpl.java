@@ -342,6 +342,68 @@ public class ItemDAOImpl implements ItemDAO {
         return false;
     }
     
+    
+    @Override
+    public boolean activateItem(int itemId) throws DatabaseException {
+        String sql = "UPDATE items SET is_active = true, updated_at = CURRENT_TIMESTAMP WHERE item_id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, itemId);
+            return stmt.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error activating item: " + e.getMessage(), e, 
+                                      "ITEM_ACTIVATE_ERROR", e.getSQLState());
+        }
+    }
+    
+    @Override
+    public List<Item> getAllItems() throws DatabaseException {
+        String sql = "SELECT i.*, c.category_name FROM items i " +
+                     "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                     "ORDER BY i.is_active DESC, i.item_name"; // Active items first
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            List<Item> items = new ArrayList<>();
+            while (rs.next()) {
+                items.add(mapRowToItem(rs));
+            }
+            return items;
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting all items: " + e.getMessage(), e, 
+                                      "ITEM_LIST_ALL_ERROR", e.getSQLState());
+        }
+    }
+    
+    @Override
+    public List<Item> getInactiveItems() throws DatabaseException {
+        String sql = "SELECT i.*, c.category_name FROM items i " +
+                     "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                     "WHERE i.is_active = false " +
+                     "ORDER BY i.item_name";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            List<Item> items = new ArrayList<>();
+            while (rs.next()) {
+                items.add(mapRowToItem(rs));
+            }
+            return items;
+            
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting inactive items: " + e.getMessage(), e, 
+                                      "ITEM_INACTIVE_ERROR", e.getSQLState());
+        }
+    }
+    
     @Override
     public String generateItemCode() throws DatabaseException {
         String sql = "SELECT MAX(CAST(SUBSTRING(item_code, 3) AS UNSIGNED)) FROM items " +

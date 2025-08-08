@@ -9,11 +9,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <style>
+        /* Style for inactive items */
+        tr.item-inactive {
+            opacity: 0.7;
+            background-color: #f8f9fa;
+        }
+        tr.item-inactive td {
+            color: #6c757d;
+        }
+        .table thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+    </style>
 </head>
 <body>
     <jsp:include page="/includes/navbar.jsp" />
     
-    <div class="container-fluid">  
+    <div class="container-fluid">
             <main class="px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Stock Status Report</h1>
@@ -35,10 +51,9 @@
                             <div class="col-md-6 text-end">
                                 <form class="form-inline" action="${pageContext.request.contextPath}/item/stock" method="get">
                                     <select class="form-select" name="status" onchange="this.form.submit()">
-                                        <option value="">All Statuses</option>
-                                        <option value="low" ${param.status eq 'low' ? 'selected' : ''}>Low Stock</option>
-                                        <option value="out" ${param.status eq 'out' ? 'selected' : ''}>Out of Stock</option>
-                                        <option value="normal" ${param.status eq 'normal' ? 'selected' : ''}>Normal Stock</option>
+                                        <option value="">All Items</option>
+                                        <option value="low" ${param.status eq 'low' ? 'selected' : ''}>Low Stock Only</option>
+                                        <option value="out" ${param.status eq 'out' ? 'selected' : ''}>Out of Stock Only</option>
                                     </select>
                                 </form>
                             </div>
@@ -46,15 +61,16 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
+                            <table class="table  table-hover">
+                                <thead>
                                     <tr>
                                         <th>Item Code</th>
                                         <th>Item Name</th>
                                         <th>Category</th>
                                         <th>Current Stock</th>
                                         <th>Reorder Level</th>
-                                        <th>Status</th>
+                                        <th>Item Status</th>
+                                        <th>Stock Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -62,29 +78,62 @@
                                     <c:choose>
                                         <c:when test="${not empty items}">
                                             <c:forEach items="${items}" var="item">
-                                                <tr class="${item.stockStatusClass}">
+                                                <tr class="${item.active ? '' : 'item-inactive'}">
                                                     <td>${item.itemCode}</td>
-                                                    <td>${item.itemName}</td>
+                                                    <td>
+                                                        ${item.itemName}
+                                                        <c:if test="${!item.active}">
+                                                            <span class="text-muted">(Inactive)</span>
+                                                        </c:if>
+                                                    </td>
                                                     <td>${item.categoryName}</td>
                                                     <td>${item.quantityInStock}</td>
                                                     <td>${item.reorderLevel}</td>
                                                     <td>
+                                                        <!-- Item Active/Inactive Status -->
+                                                        <span class="badge ${item.active ? 'bg-success' : 'bg-secondary'}">
+                                                            ${item.active ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <!-- Stock Status -->
                                                         <span class="badge bg-${item.stockStatusClass}">
                                                             ${item.stockStatus}
                                                         </span>
                                                     </td>
                                                     <td>
+                                                        <!-- Only show Adjust Stock for active items -->
+                                                        <c:if test="${item.active}">
+                                                            <a href="${pageContext.request.contextPath}/item/adjust-stock?id=${item.itemId}" 
+                                                               class="btn btn-sm btn-primary" title="Adjust Stock">
+                                                                <i class="fas fa-boxes"></i> Adjust
+                                                            </a>
+                                                        </c:if>
+                                                        
+                                                        <!-- Edit button for all items -->
                                                         <a href="${pageContext.request.contextPath}/item/edit?id=${item.itemId}" 
-                                                           class="btn btn-sm btn-warning" title="Edit">
-                                                            <i class="fas fa-edit"></i>
+                                                           class="btn btn-sm btn-warning" title="Edit Item">
+                                                            <i class="fas fa-edit"></i> Edit
                                                         </a>
+                                                        
+                                                        <!-- Activate button for inactive items -->
+                                                        <c:if test="${!item.active}">
+                                                            <form action="${pageContext.request.contextPath}/item/activate" method="post" 
+                                                                  style="display:inline;" 
+                                                                  onsubmit="return confirm('Activate this item?');">
+                                                                <input type="hidden" name="id" value="${item.itemId}">
+                                                                <button type="submit" class="btn btn-sm btn-success" title="Activate">
+                                                                    <i class="fas fa-check-circle"></i>
+                                                                </button>
+                                                            </form>
+                                                        </c:if>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
                                         </c:when>
                                         <c:otherwise>
                                             <tr>
-                                                <td colspan="7" class="text-center">No items found</td>
+                                                <td colspan="8" class="text-center">No items found</td>
                                             </tr>
                                         </c:otherwise>
                                     </c:choose>
@@ -100,6 +149,5 @@
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/validation.js"></script>
 </body>
 </html>

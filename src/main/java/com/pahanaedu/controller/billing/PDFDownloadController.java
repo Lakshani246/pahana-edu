@@ -47,7 +47,10 @@ public class PDFDownloadController extends HttpServlet {
 
             String[] pathParts = pathInfo.substring(1).split("/");
             int billId = Integer.parseInt(pathParts[0]);
-            String format = pathParts.length > 1 ? pathParts[1] : "pdf"; // Changed default to PDF
+            String format = "pdf"; // Always PDF unless explicitly HTML
+            if (pathParts.length > 1 && "html".equalsIgnoreCase(pathParts[1])) {
+                format = "html";
+            } // Changed default to PDF
 
             // Get bill details
             Bill bill = billingService.getBillById(billId);
@@ -77,19 +80,7 @@ public class PDFDownloadController extends HttpServlet {
             String companyAddress = "123 Main Street, Colombo 07";
             String companyPhone = "011-2345678";
 
-            if ("text".equalsIgnoreCase(format)) {
-                // Generate text format
-                String billText = SimplePDFGenerator.generateBillText(bill, companyName);
-
-                response.setContentType("text/plain");
-                response.setHeader("Content-Disposition",
-                    "attachment; filename=\"Bill_" + bill.getBillNumber() + ".txt\"");
-
-                PrintWriter out = response.getWriter();
-                out.print(billText);
-                out.flush();
-
-            } else if ("html".equalsIgnoreCase(format)) {
+             if ("html".equalsIgnoreCase(format)) {
                 // Generate HTML format
                 String billHTML = SimplePDFGenerator.generateBillHTML(bill,
                     companyName, companyAddress, companyPhone);
