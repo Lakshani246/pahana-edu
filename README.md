@@ -162,7 +162,7 @@ This project is developed for educational purposes as part of academic requireme
 ## 👨‍💻 Developer
 
 **Lakshani246**
-- Final Year Project
+- Assignment Project
 - BSc (Hons) in Software Engineering
 
 ## 🙏 Acknowledgments
